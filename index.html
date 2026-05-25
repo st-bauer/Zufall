@@ -5,943 +5,1091 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Stochastik-Abenteuer – Klasse 7</title>
 <style>
-  :root {
-    --m-primary: #2d6a4f; --m-dark: #1b4332; --m-light: #b7e4c7; --m-bg: #f0fdf4;
-    --r-primary: #1d3557; --r-dark: #0d1f33; --r-light: #a8dadc; --r-bg: #f0f7ff;
-    --e-primary: #6d28d9; --e-dark: #4c1d95; --e-light: #ddd6fe; --e-bg: #faf5ff;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f9fa; color: #222; min-height: 100vh; }
+/* ─── ROOT VARIABLES ─────────────────────────────── */
+:root {
+  --m-primary:#2d6a4f;--m-dark:#1b4332;--m-light:#b7e4c7;--m-bg:#f0fdf4;--m-grad1:#43b07a;--m-grad2:#1b4332;
+  --r-primary:#1d3557;--r-dark:#0d1f33;--r-light:#a8dadc;--r-bg:#f0f7ff;--r-grad1:#1d3557;--r-grad2:#457b9d;
+  --e-primary:#6d28d9;--e-dark:#4c1d95;--e-light:#ddd6fe;--e-bg:#faf5ff;--e-grad1:#7c3aed;--e-grad2:#2e1065;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;color:#222;min-height:100vh;overflow-x:hidden;}
 
-  /* LANDING */
-  #landing { display: flex; flex-direction: column; align-items: center; justify-content: center;
-    min-height: 100vh; padding: 24px; background: linear-gradient(135deg, #e8f5e9 0%, #e3f2fd 50%, #f3e5f5 100%); }
-  .landing-title { font-size: 2.2rem; font-weight: 800; text-align: center; margin-bottom: 8px; color: #1a1a2e; }
-  .landing-sub { font-size: 1.1rem; color: #555; margin-bottom: 36px; text-align: center; }
-  .version-cards { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; max-width: 900px; }
-  .version-card { border-radius: 16px; padding: 28px 24px; cursor: pointer; width: 260px; transition: transform 0.2s, box-shadow 0.2s;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.10); text-align: center; border: 3px solid transparent; }
-  .version-card:hover { transform: translateY(-6px); box-shadow: 0 10px 28px rgba(0,0,0,0.18); }
-  .version-card.M { background: var(--m-bg); border-color: var(--m-primary); }
-  .version-card.R { background: var(--r-bg); border-color: var(--r-primary); }
-  .version-card.E { background: var(--e-bg); border-color: var(--e-primary); }
-  .card-icon { font-size: 2.8rem; margin-bottom: 10px; }
-  .card-label { font-size: 0.8rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
-  .card-label.M { color: var(--m-primary); }
-  .card-label.R { color: var(--r-primary); }
-  .card-label.E { color: var(--e-primary); }
-  .card-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 8px; }
-  .card-desc { font-size: 0.9rem; color: #555; line-height: 1.5; }
-  .card-btn { display: inline-block; margin-top: 16px; padding: 10px 22px; border-radius: 8px;
-    font-weight: 700; font-size: 0.95rem; color: #fff; border: none; cursor: pointer; }
-  .version-card.M .card-btn { background: var(--m-primary); }
-  .version-card.R .card-btn { background: var(--r-primary); }
-  .version-card.E .card-btn { background: var(--e-primary); }
+/* ─── CANVAS (CONFETTI + DICE) ──────────────────── */
+#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;}
+#confettiCanvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999;display:none;}
 
-  /* GAME */
-  #game { display: none; max-width: 780px; margin: 0 auto; padding: 20px 16px 60px; }
-  .game-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap; }
-  .home-btn { background: #fff; border: 2px solid #ccc; border-radius: 8px; padding: 6px 14px;
-    cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: background 0.15s; }
-  .home-btn:hover { background: #f0f0f0; }
-  .progress-wrap { flex: 1; background: #e0e0e0; border-radius: 999px; height: 12px; min-width: 100px; }
-  .progress-fill { height: 100%; border-radius: 999px; transition: width 0.4s; }
-  .progress-fill.M { background: var(--m-primary); }
-  .progress-fill.R { background: var(--r-primary); }
-  .progress-fill.E { background: var(--e-primary); }
-  .score-badge { font-weight: 700; font-size: 0.95rem; padding: 4px 12px; border-radius: 999px; white-space: nowrap; }
-  .score-badge.M { background: var(--m-light); color: var(--m-dark); }
-  .score-badge.R { background: var(--r-light); color: var(--r-dark); }
-  .score-badge.E { background: var(--e-light); color: var(--e-dark); }
+/* ─── LANDING ────────────────────────────────────── */
+#landing{
+  position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;min-height:100vh;padding:24px;
+  background:linear-gradient(135deg,#e8f5e9 0%,#e3f2fd 50%,#f3e5f5 100%);
+}
+.landing-title{font-size:2.4rem;font-weight:900;text-align:center;margin-bottom:8px;
+  color:#1a1a2e;text-shadow:0 2px 8px rgba(0,0,0,.08);letter-spacing:-.5px;}
+.landing-sub{font-size:1.05rem;color:#555;margin-bottom:40px;text-align:center;}
+.dice-row{display:flex;gap:10px;margin-bottom:36px;animation:floatRow 3s ease-in-out infinite;}
+.dice-row span{font-size:2.2rem;animation:spin3d 4s linear infinite;}
+.dice-row span:nth-child(2){animation-delay:.5s;}
+.dice-row span:nth-child(3){animation-delay:1s;}
+@keyframes floatRow{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+@keyframes spin3d{0%{transform:rotateY(0);}100%{transform:rotateY(360deg);}}
 
-  .chamber-tag { font-size: 0.78rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
-    padding: 3px 10px; border-radius: 999px; margin-bottom: 10px; display: inline-block; }
-  .chamber-tag.M { background: var(--m-light); color: var(--m-dark); }
-  .chamber-tag.R { background: var(--r-light); color: var(--r-dark); }
-  .chamber-tag.E { background: var(--e-light); color: var(--e-dark); }
+.version-cards{display:flex;flex-wrap:wrap;gap:22px;justify-content:center;max-width:960px;}
+.version-card{
+  border-radius:20px;padding:30px 24px;cursor:pointer;width:280px;
+  transition:transform .25s,box-shadow .25s;text-align:center;
+  border:3px solid transparent;position:relative;overflow:hidden;
+  animation:cardIn .5s ease both;
+}
+.version-card:nth-child(1){animation-delay:.1s;}
+.version-card:nth-child(2){animation-delay:.2s;}
+.version-card:nth-child(3){animation-delay:.3s;}
+@keyframes cardIn{from{opacity:0;transform:translateY(24px);}to{opacity:1;transform:translateY(0);}}
+.version-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;bottom:0;opacity:.07;
+  background:repeating-linear-gradient(45deg,#000 0,#000 2px,transparent 0,transparent 50%);
+  background-size:12px 12px;pointer-events:none;
+}
+.version-card:hover{transform:translateY(-8px) scale(1.02);box-shadow:0 14px 36px rgba(0,0,0,.2);}
+.version-card.M{background:linear-gradient(145deg,#f0fdf4,#d4f1e0);border-color:var(--m-primary);box-shadow:0 4px 18px rgba(45,106,79,.15);}
+.version-card.R{background:linear-gradient(145deg,#f0f7ff,#d0e8f5);border-color:var(--r-primary);box-shadow:0 4px 18px rgba(29,53,87,.15);}
+.version-card.E{background:linear-gradient(145deg,#faf5ff,#ede0fe);border-color:var(--e-primary);box-shadow:0 4px 18px rgba(109,40,217,.15);}
+.card-icon{font-size:3rem;margin-bottom:12px;display:block;}
+.card-label{font-size:.78rem;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;}
+.card-label.M{color:var(--m-primary);}
+.card-label.R{color:var(--r-primary);}
+.card-label.E{color:var(--e-primary);}
+.card-title{font-size:1.3rem;font-weight:800;margin-bottom:8px;}
+.card-desc{font-size:.88rem;color:#555;line-height:1.55;}
+.card-btn{
+  display:inline-block;margin-top:18px;padding:11px 26px;border-radius:10px;
+  font-weight:800;font-size:.95rem;color:#fff;border:none;cursor:pointer;
+  transition:transform .15s,box-shadow .15s;letter-spacing:.3px;
+  box-shadow:0 3px 10px rgba(0,0,0,.2);
+}
+.card-btn:hover{transform:scale(1.05);box-shadow:0 5px 16px rgba(0,0,0,.28);}
+.version-card.M .card-btn{background:linear-gradient(135deg,var(--m-primary),var(--m-dark));}
+.version-card.R .card-btn{background:linear-gradient(135deg,var(--r-primary),var(--r-dark));}
+.version-card.E .card-btn{background:linear-gradient(135deg,var(--e-primary),var(--e-dark));}
 
-  .scene-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 12px; }
-  .story-box { background: #fff; border-radius: 12px; padding: 18px 20px; margin-bottom: 14px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.07); line-height: 1.7; font-size: 1rem; border-left: 5px solid #ccc; }
-  .story-box.M { border-color: var(--m-primary); }
-  .story-box.R { border-color: var(--r-primary); }
-  .story-box.E { border-color: var(--e-primary); }
+/* ─── GAME BACKGROUND ───────────────────────────── */
+#game{
+  display:none;position:relative;z-index:1;min-height:100vh;
+  padding:20px 16px 80px;transition:background .6s;
+}
+body.game-M #game{background:linear-gradient(160deg,#1b4332 0%,#2d6a4f 40%,#40916c 100%);}
+body.game-R #game{background:linear-gradient(160deg,#0d1f33 0%,#1d3557 40%,#2a4e7a 100%);}
+body.game-E #game{background:linear-gradient(160deg,#2e1065 0%,#4c1d95 40%,#6d28d9 100%);}
 
-  .info-box { border-radius: 10px; padding: 14px 18px; margin-bottom: 14px; font-size: 0.95rem; line-height: 1.65; }
-  .info-box.M { background: var(--m-light); color: var(--m-dark); }
-  .info-box.R { background: var(--r-light); color: var(--r-dark); }
-  .info-box.E { background: var(--e-light); color: var(--e-dark); }
-  .info-box strong { display: block; margin-bottom: 5px; font-size: 1rem; }
+/* stars for R and E */
+body.game-R #game::before,body.game-E #game::before{
+  content:'';position:fixed;top:0;left:0;right:0;bottom:0;
+  background-image:radial-gradient(1.5px 1.5px at 10% 15%,rgba(255,255,255,.7) 0%,transparent 100%),
+    radial-gradient(1px 1px at 25% 60%,rgba(255,255,255,.5) 0%,transparent 100%),
+    radial-gradient(2px 2px at 40% 20%,rgba(255,255,255,.6) 0%,transparent 100%),
+    radial-gradient(1.5px 1.5px at 55% 75%,rgba(255,255,255,.4) 0%,transparent 100%),
+    radial-gradient(1px 1px at 70% 10%,rgba(255,255,255,.7) 0%,transparent 100%),
+    radial-gradient(2px 2px at 85% 45%,rgba(255,255,255,.5) 0%,transparent 100%),
+    radial-gradient(1px 1px at 92% 80%,rgba(255,255,255,.6) 0%,transparent 100%),
+    radial-gradient(1.5px 1.5px at 30% 85%,rgba(255,255,255,.4) 0%,transparent 100%),
+    radial-gradient(1px 1px at 65% 50%,rgba(255,255,255,.5) 0%,transparent 100%),
+    radial-gradient(2px 2px at 48% 92%,rgba(255,255,255,.3) 0%,transparent 100%);
+  pointer-events:none;z-index:0;animation:twinkle 5s ease-in-out infinite alternate;
+}
+@keyframes twinkle{0%{opacity:.6;}100%{opacity:1;}}
 
-  .visual-box { background: #fff; border-radius: 10px; padding: 14px; margin-bottom: 14px;
-    text-align: center; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
+/* palm overlay for M */
+body.game-M #game::after{
+  content:'🌴';position:fixed;right:-20px;bottom:0;font-size:180px;
+  opacity:.08;pointer-events:none;z-index:0;line-height:1;
+}
 
-  .question-box { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-  .question-text { font-size: 1.05rem; font-weight: 600; margin-bottom: 16px; line-height: 1.55; }
-  .hint-box { background: #fff8dc; border: 1px solid #f0c040; border-radius: 8px;
-    padding: 10px 14px; margin-bottom: 14px; font-size: 0.9rem; color: #7a5800; display: none; }
-  .hint-btn { background: none; border: 1px dashed #aaa; border-radius: 6px; padding: 5px 12px;
-    cursor: pointer; font-size: 0.85rem; color: #666; margin-bottom: 10px; }
-  .hint-btn:hover { background: #f5f5f5; }
+/* hex grid for E */
+body.game-E #game::before{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='70'%3E%3Cpolygon points='30,5 55,18 55,52 30,65 5,52 5,18' fill='none' stroke='rgba(255,255,255,0.06)' stroke-width='1'/%3E%3C/svg%3E");
+  background-size:60px 70px;
+}
 
-  .options { display: flex; flex-direction: column; gap: 10px; }
-  .option-btn { padding: 13px 16px; border-radius: 10px; border: 2px solid #d0d0d0;
-    background: #fff; cursor: pointer; font-size: 0.97rem; text-align: left; line-height: 1.45;
-    transition: background 0.15s, border-color 0.15s; font-family: inherit; }
-  .option-btn:hover:not(:disabled) { background: #f5f5f5; border-color: #999; }
-  .option-btn.correct { background: #d4edda; border-color: #28a745; color: #145523; }
-  .option-btn.wrong { background: #f8d7da; border-color: #dc3545; color: #721c24; }
-  .option-btn.missed { background: #e2e3e5; border-color: #adb5bd; color: #495057; }
-  .option-btn:disabled { cursor: default; }
+/* ─── GAME INNER (glassmorphism container) ───────── */
+.game-inner{
+  max-width:760px;margin:0 auto;position:relative;z-index:1;
+}
 
-  .feedback-box { border-radius: 10px; padding: 14px 18px; margin-top: 12px; font-size: 0.95rem;
-    line-height: 1.6; display: none; }
-  .feedback-box.correct-fb { background: #d4edda; border: 1.5px solid #28a745; color: #145523; }
-  .feedback-box.wrong-fb { background: #f8d7da; border: 1.5px solid #dc3545; color: #721c24; }
+/* ─── HEADER ─────────────────────────────────────── */
+.game-header{
+  display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;
+  background:rgba(255,255,255,.12);backdrop-filter:blur(8px);
+  border-radius:14px;padding:12px 16px;border:1px solid rgba(255,255,255,.2);
+}
+.home-btn{
+  background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.4);
+  border-radius:8px;padding:7px 14px;cursor:pointer;font-size:.9rem;
+  font-weight:700;color:#fff;transition:background .15s;
+}
+.home-btn:hover{background:rgba(255,255,255,.35);}
+.progress-wrap{flex:1;background:rgba(255,255,255,.2);border-radius:999px;height:10px;min-width:80px;}
+.progress-fill{height:100%;border-radius:999px;transition:width .5s ease;background:#fff;}
+.score-badge{
+  font-weight:800;font-size:.9rem;padding:5px 14px;border-radius:999px;
+  background:rgba(255,255,255,.25);color:#fff;border:1px solid rgba(255,255,255,.4);
+  white-space:nowrap;
+}
 
-  .next-btn { display: none; margin-top: 16px; padding: 13px 28px; border-radius: 10px; border: none;
-    font-size: 1.05rem; font-weight: 700; cursor: pointer; color: #fff; width: 100%; transition: opacity 0.2s; }
-  .next-btn:hover { opacity: 0.88; }
-  .next-btn.M { background: var(--m-primary); }
-  .next-btn.R { background: var(--r-primary); }
-  .next-btn.E { background: var(--e-primary); }
+/* ─── MASCOT ─────────────────────────────────────── */
+.mascot-wrap{
+  display:flex;align-items:flex-end;gap:14px;margin-bottom:14px;animation:mascotIn .4s ease both;
+}
+@keyframes mascotIn{from{opacity:0;transform:translateX(-20px);}to{opacity:1;transform:translateX(0);}}
+.mascot-bubble{
+  background:rgba(255,255,255,.92);border-radius:14px 14px 14px 0;
+  padding:10px 14px;font-size:.9rem;line-height:1.4;max-width:320px;
+  box-shadow:0 2px 10px rgba(0,0,0,.15);color:#333;
+  animation:bubbleIn .4s .2s ease both;
+}
+@keyframes bubbleIn{from{opacity:0;transform:scale(.8);}to{opacity:1;transform:scale(1);}}
+.mascot-svg{flex-shrink:0;}
 
-  /* FINAL */
-  .summary-card { background: #fff; border-radius: 14px; padding: 24px; margin-bottom: 14px;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.09); }
-  .summary-card h3 { font-size: 1.15rem; margin-bottom: 10px; }
-  .key-items { list-style: none; padding: 0; }
-  .key-items li { padding: 6px 0; border-bottom: 1px solid #eee; font-size: 0.97rem; }
-  .key-items li:before { content: '✓ '; color: #28a745; font-weight: 700; }
-  .score-final { font-size: 1.8rem; font-weight: 800; text-align: center; margin: 12px 0; }
-  .reflection-box { background: #fffbe6; border: 2px solid #f0c040; border-radius: 12px;
-    padding: 20px; margin-top: 14px; }
-  .reflection-box h3 { margin-bottom: 8px; color: #7a5800; }
-  .reflection-box p { color: #5a3e00; line-height: 1.6; font-size: 0.97rem; }
-  .restart-btn { display: block; margin: 20px auto 0; padding: 12px 30px; border-radius: 10px;
-    border: none; font-size: 1rem; font-weight: 700; cursor: pointer; color: #fff; background: #555; }
+/* ─── SCENE TRANSITION ───────────────────────────── */
+.scene-wrap{animation:sceneSlide .35s ease both;}
+@keyframes sceneSlide{from{opacity:0;transform:translateX(30px);}to{opacity:1;transform:translateX(0);}}
 
-  /* SVG TREE */
-  .tree-svg { width: 100%; max-width: 520px; height: auto; }
+/* ─── CARDS (glass) ─────────────────────────────── */
+.glass-card{
+  background:rgba(255,255,255,.88);backdrop-filter:blur(10px);
+  border-radius:16px;padding:20px 22px;margin-bottom:14px;
+  box-shadow:0 4px 20px rgba(0,0,0,.12);border:1px solid rgba(255,255,255,.5);
+}
+.chamber-tag{
+  font-size:.75rem;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;
+  padding:4px 12px;border-radius:999px;margin-bottom:12px;display:inline-block;
+  background:rgba(255,255,255,.3);color:#fff;border:1px solid rgba(255,255,255,.4);
+}
+.scene-title{font-size:1.5rem;font-weight:900;margin-bottom:14px;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.25);}
+.story-box{
+  background:rgba(255,255,255,.9);border-radius:14px;padding:18px 20px;
+  margin-bottom:14px;box-shadow:0 2px 10px rgba(0,0,0,.1);line-height:1.75;
+  font-size:1rem;border-left:5px solid rgba(255,255,255,.4);
+}
+body.game-M .story-box{border-color:var(--m-primary);}
+body.game-R .story-box{border-color:var(--r-light);}
+body.game-E .story-box{border-color:var(--e-light);}
 
-  /* MATH */
-  .math { font-family: 'Courier New', monospace; font-size: 0.97rem; background: rgba(0,0,0,0.06);
-    border-radius: 4px; padding: 1px 5px; }
-  .formula-block { background: rgba(0,0,0,0.05); border-radius: 8px; padding: 10px 14px;
-    margin: 8px 0; font-family: 'Courier New', monospace; font-size: 0.95rem; line-height: 1.8; }
+.info-box{
+  border-radius:12px;padding:14px 18px;margin-bottom:14px;
+  font-size:.93rem;line-height:1.7;border:1.5px solid transparent;
+}
+body.game-M .info-box{background:rgba(183,228,199,.5);color:#1b4332;border-color:rgba(45,106,79,.3);}
+body.game-R .info-box{background:rgba(168,218,220,.4);color:#0d1f33;border-color:rgba(29,53,87,.3);}
+body.game-E .info-box{background:rgba(221,214,254,.5);color:#2e1065;border-color:rgba(109,40,217,.3);}
 
-  @media (max-width: 600px) {
-    .landing-title { font-size: 1.5rem; }
-    .version-card { width: 100%; }
-    .scene-title { font-size: 1.2rem; }
-  }
+.visual-box{background:rgba(255,255,255,.9);border-radius:12px;padding:14px;margin-bottom:14px;text-align:center;}
+
+/* ─── QUESTION BOX ───────────────────────────────── */
+.question-box{background:rgba(255,255,255,.93);border-radius:16px;padding:22px;margin-bottom:14px;box-shadow:0 4px 18px rgba(0,0,0,.1);}
+.question-text{font-size:1.05rem;font-weight:700;margin-bottom:18px;line-height:1.55;color:#1a1a2e;}
+.hint-btn{
+  background:rgba(255,200,0,.15);border:1px dashed #c9a800;border-radius:8px;
+  padding:6px 14px;cursor:pointer;font-size:.85rem;color:#7a5800;margin-bottom:12px;
+  transition:background .15s;
+}
+.hint-btn:hover{background:rgba(255,200,0,.3);}
+.hint-box{
+  background:#fff8dc;border:1.5px solid #f0c040;border-radius:10px;
+  padding:11px 15px;margin-bottom:14px;font-size:.9rem;color:#7a5800;display:none;
+  animation:fadeDown .2s ease;
+}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);}}
+
+/* ─── OPTIONS ────────────────────────────────────── */
+.options{display:flex;flex-direction:column;gap:10px;}
+.option-btn{
+  padding:14px 18px;border-radius:12px;border:2px solid rgba(0,0,0,.1);
+  background:#fff;cursor:pointer;font-size:.97rem;text-align:left;line-height:1.45;
+  transition:background .15s,border-color .15s,transform .12s,box-shadow .12s;
+  font-family:inherit;box-shadow:0 1px 4px rgba(0,0,0,.07);
+}
+.option-btn:hover:not(:disabled){
+  background:#f0f4ff;border-color:#888;transform:translateX(4px);
+  box-shadow:0 3px 10px rgba(0,0,0,.12);
+}
+.option-btn.correct{
+  background:linear-gradient(135deg,#d4edda,#b8dfc5);border-color:#28a745;color:#145523;
+  animation:correctPulse .5s ease;
+}
+.option-btn.wrong{
+  background:linear-gradient(135deg,#f8d7da,#f0bec3);border-color:#dc3545;color:#721c24;
+  animation:wrongShake .4s ease;
+}
+.option-btn.missed{background:#f0f1f2;border-color:#ccc;color:#888;}
+.option-btn:disabled{cursor:default;}
+@keyframes correctPulse{
+  0%{transform:scale(1);}30%{transform:scale(1.03);}60%{transform:scale(.98);}100%{transform:scale(1);}
+}
+@keyframes wrongShake{
+  0%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}
+  60%{transform:translateX(-5px);}80%{transform:translateX(5px);}100%{transform:translateX(0);}
+}
+
+/* ─── FEEDBACK ───────────────────────────────────── */
+.feedback-box{
+  border-radius:12px;padding:14px 18px;margin-top:14px;font-size:.95rem;
+  line-height:1.6;display:none;animation:fadeDown .3s ease;
+}
+.feedback-box.correct-fb{background:linear-gradient(135deg,#d4edda,#c3e6cb);border:1.5px solid #28a745;color:#145523;}
+.feedback-box.wrong-fb{background:linear-gradient(135deg,#f8d7da,#f1c0c5);border:1.5px solid #dc3545;color:#721c24;}
+
+/* ─── NEXT BUTTON ────────────────────────────────── */
+.next-btn{
+  display:none;margin-top:16px;padding:15px 30px;border-radius:12px;border:none;
+  font-size:1.05rem;font-weight:800;cursor:pointer;color:#fff;width:100%;
+  transition:transform .15s,box-shadow .15s;letter-spacing:.3px;
+  box-shadow:0 4px 14px rgba(0,0,0,.2);
+}
+.next-btn:hover{transform:scale(1.02);box-shadow:0 6px 20px rgba(0,0,0,.28);}
+body.game-M .next-btn{background:linear-gradient(135deg,#43b07a,#1b4332);}
+body.game-R .next-btn{background:linear-gradient(135deg,#457b9d,#1d3557);}
+body.game-E .next-btn{background:linear-gradient(135deg,#7c3aed,#2e1065);}
+
+/* ─── FINAL ──────────────────────────────────────── */
+.summary-card{background:rgba(255,255,255,.93);border-radius:16px;padding:24px;margin-bottom:14px;box-shadow:0 4px 18px rgba(0,0,0,.1);}
+.summary-card h3{font-size:1.1rem;margin-bottom:12px;color:#1a1a2e;}
+.key-items{list-style:none;padding:0;}
+.key-items li{padding:7px 0;border-bottom:1px solid rgba(0,0,0,.07);font-size:.95rem;color:#2a2a2a;}
+.key-items li::before{content:'✓ ';color:#28a745;font-weight:800;}
+.score-final-wrap{text-align:center;margin:18px 0;}
+.score-final{font-size:2rem;font-weight:900;display:block;}
+.score-stars{font-size:2rem;margin-top:4px;}
+.reflection-box{
+  background:rgba(255,248,220,.95);border:2.5px solid #f0c040;border-radius:16px;
+  padding:22px;margin-top:14px;
+}
+.reflection-box h3{margin-bottom:10px;color:#7a5800;font-size:1.1rem;}
+.reflection-box p{color:#5a3e00;line-height:1.65;font-size:.97rem;}
+.restart-btn{
+  display:block;margin:22px auto 0;padding:14px 34px;border-radius:12px;
+  border:none;font-size:1rem;font-weight:800;cursor:pointer;color:#fff;
+  background:linear-gradient(135deg,#555,#333);
+  box-shadow:0 4px 14px rgba(0,0,0,.25);transition:transform .15s;
+}
+.restart-btn:hover{transform:scale(1.04);}
+
+/* ─── SVG TREE ───────────────────────────────────── */
+.tree-svg{width:100%;max-width:520px;height:auto;}
+
+/* ─── RESPONSIVE ─────────────────────────────────── */
+@media(max-width:600px){
+  .landing-title{font-size:1.6rem;}
+  .version-card{width:100%;}
+  .scene-title{font-size:1.2rem;}
+}
 </style>
 </head>
 <body>
 
-<!-- LANDING PAGE -->
+<canvas id="bgCanvas"></canvas>
+<canvas id="confettiCanvas"></canvas>
+
+<!-- ══════════════════════════════════════════════ -->
+<!--  LANDING                                       -->
+<!-- ══════════════════════════════════════════════ -->
 <div id="landing">
   <div class="landing-title">🎲 Stochastik-Abenteuer</div>
   <div class="landing-sub">Klasse 7 · Interaktives Lernspiel · ca. 30 Minuten</div>
+  <div class="dice-row"><span>🎲</span><span>🎯</span><span>🎲</span></div>
   <div class="version-cards">
     <div class="version-card M" onclick="startGame('M')">
-      <div class="card-icon">🌱</div>
+      <span class="card-icon">🌴</span>
       <div class="card-label M">Mindeststandard</div>
       <div class="card-title">Die Glücksinsel</div>
       <div class="card-desc">Einfache Sprache, viele Tipps und klare Aufgaben. Perfekt zum Einstieg!</div>
-      <button class="card-btn">Abenteuer starten</button>
+      <button class="card-btn">Abenteuer starten →</button>
     </div>
     <div class="version-card R" onclick="startGame('R')">
-      <div class="card-icon">⚡</div>
+      <span class="card-icon">⚡</span>
       <div class="card-label R">Regelstandard</div>
-      <div class="card-title">Die Akademie des Zufalls</div>
+      <div class="card-title">Akademie des Zufalls</div>
       <div class="card-desc">Fachbegriffe, Begründungsaufgaben und spannende Entscheidungen warten auf dich.</div>
-      <button class="card-btn">Abenteuer starten</button>
+      <button class="card-btn">Abenteuer starten →</button>
     </div>
     <div class="version-card E" onclick="startGame('E')">
-      <div class="card-icon">🏆</div>
+      <span class="card-icon">🏆</span>
       <div class="card-label E">Expertenstandard</div>
-      <div class="card-title">Die Stochastik-Akademie</div>
+      <div class="card-title">Stochastik-Akademie</div>
       <div class="card-desc">Anspruchsvolle Aufgaben mit Baumdiagrammen, Pfad- und Summenregel.</div>
-      <button class="card-btn">Abenteuer starten</button>
+      <button class="card-btn">Abenteuer starten →</button>
     </div>
   </div>
 </div>
 
-<!-- GAME PAGE -->
+<!-- ══════════════════════════════════════════════ -->
+<!--  GAME                                          -->
+<!-- ══════════════════════════════════════════════ -->
 <div id="game">
-  <div class="game-header">
-    <button class="home-btn" onclick="home()">🏠 Startseite</button>
-    <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
-    <div class="score-badge" id="scoreBadge">⭐ 0 Punkte</div>
+  <div class="game-inner">
+    <div class="game-header">
+      <button class="home-btn" onclick="home()">🏠 Start</button>
+      <div class="progress-wrap"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="score-badge" id="scoreBadge">⭐ 0 Punkte</div>
+    </div>
+    <div id="sceneContainer"></div>
   </div>
-  <div id="sceneContainer"></div>
 </div>
 
 <script>
-// ─────────────────────────────────────────────
+// ─────────────────────────────────────────────────────
+// MASCOTS
+// ─────────────────────────────────────────────────────
+const mascots = {
+  M: {
+    svg:`<svg class="mascot-svg" width="72" height="72" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+      <!-- Polly the Parrot -->
+      <ellipse cx="36" cy="42" rx="18" ry="22" fill="#27ae60"/>
+      <ellipse cx="36" cy="26" rx="14" ry="14" fill="#2ecc71"/>
+      <circle cx="30" cy="23" r="4" fill="white"/><circle cx="30" cy="23" r="2.2" fill="#1a1a1a"/>
+      <circle cx="42" cy="23" r="4" fill="white"/><circle cx="42" cy="23" r="2.2" fill="#1a1a1a"/>
+      <path d="M30,30 Q36,36 42,30" fill="none" stroke="#1a1a1a" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M28,31 Q36,38 44,31" fill="#f39c12" stroke="#e67e22" stroke-width=".8"/>
+      <path d="M18,20 Q10,10 16,6 Q20,14 22,20 Z" fill="#e74c3c"/>
+      <path d="M54,20 Q62,10 56,6 Q52,14 50,20 Z" fill="#3498db"/>
+      <ellipse cx="36" cy="56" rx="8" ry="5" fill="#f39c12"/>
+      <text x="36" y="68" text-anchor="middle" font-size="8" fill="#fff" font-family="Arial" font-weight="bold">Polly</text>
+    </svg>`,
+    lines: ['Arrr, löse das Rätsel! 🦜','Super, weiter so! 🌴','Denk nach – du schaffst das! 💪','Klasse! Auf zur nächsten Station! 🎯','Polly will einen Cracker... und die richtige Antwort! 🦜']
+  },
+  R: {
+    svg:`<svg class="mascot-svg" width="72" height="72" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+      <!-- Prof. Zara -->
+      <rect x="20" y="38" width="32" height="26" rx="6" fill="#1d3557"/>
+      <ellipse cx="36" cy="30" rx="14" ry="15" fill="#f5cba7"/>
+      <rect x="22" y="16" width="28" height="10" rx="5" fill="#1d3557"/>
+      <rect x="18" y="18" width="36" height="4" rx="2" fill="#2a4e7a"/>
+      <line x1="32" y1="16" x2="32" y2="12" stroke="#1d3557" stroke-width="2"/>
+      <rect x="28" y="8" width="8" height="4" rx="1" fill="#1d3557"/>
+      <circle cx="30" cy="27" r="3.5" fill="white"/><circle cx="30" cy="27" r="1.8" fill="#2c3e50"/>
+      <circle cx="42" cy="27" r="3.5" fill="white"/><circle cx="42" cy="27" r="1.8" fill="#2c3e50"/>
+      <ellipse cx="30" cy="24" rx="4.5" ry="3" fill="none" stroke="#888" stroke-width="1"/>
+      <ellipse cx="42" cy="24" rx="4.5" ry="3" fill="none" stroke="#888" stroke-width="1"/>
+      <line x1="34.5" y1="24" x2="37.5" y2="24" stroke="#888" stroke-width="1"/>
+      <path d="M30,34 Q36,38 42,34" fill="none" stroke="#c0392b" stroke-width="1.5" stroke-linecap="round"/>
+      <rect x="26" y="48" width="8" height="12" rx="2" fill="#fff" opacity=".2"/>
+      <text x="36" y="70" text-anchor="middle" font-size="7.5" fill="#a8dadc" font-family="Arial" font-weight="bold">Prof. Zara</text>
+    </svg>`,
+    lines: ['Analysiere sorgfältig!','Nutze die Laplace-Formel.','Begründe deine Antwort!','Sehr gut – weiter zur nächsten Aufgabe!','Denke an den Ergebnisraum Ω.']
+  },
+  E: {
+    svg:`<svg class="mascot-svg" width="72" height="72" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
+      <!-- Prof. Stoch -->
+      <rect x="20" y="38" width="32" height="26" rx="6" fill="#4c1d95"/>
+      <ellipse cx="36" cy="30" rx="14" ry="15" fill="#f5cba7"/>
+      <path d="M22,20 Q36,10 50,20 Q50,14 36,10 Q22,14 22,20 Z" fill="#6d28d9"/>
+      <ellipse cx="36" cy="14" rx="8" ry="5" fill="#7c3aed"/>
+      <circle cx="30" cy="27" r="3.5" fill="white"/><circle cx="30" cy="27" r="2" fill="#1a0533"/>
+      <circle cx="42" cy="27" r="3.5" fill="white"/><circle cx="42" cy="27" r="2" fill="#1a0533"/>
+      <path d="M30,32 Q36,36 42,32" fill="none" stroke="#7c3aed" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- Beard -->
+      <path d="M28,37 Q32,44 36,44 Q40,44 44,37" fill="#d5c0a0"/>
+      <!-- Lab coat white collar -->
+      <polygon points="28,38 36,50 44,38" fill="white" opacity=".3"/>
+      <!-- Stars around head -->
+      <text x="12" y="16" font-size="10">✦</text>
+      <text x="56" y="22" font-size="8">✦</text>
+      <text x="8" y="36" font-size="7">✦</text>
+      <text x="36" y="70" text-anchor="middle" font-size="7.5" fill="#ddd6fe" font-family="Arial" font-weight="bold">Prof. Stoch</text>
+    </svg>`,
+    lines: ['Präzision ist gefragt!','Nutze alle Fachbegriffe korrekt.','Überprüfe deinen Ergebnisraum!','Exzellent – meisterhaft!','Stelle das vollständige Baumdiagramm auf.']
+  }
+};
+
+// ─────────────────────────────────────────────────────
+// SOUND (Web Audio API)
+// ─────────────────────────────────────────────────────
+let audioCtx = null;
+function getAudioCtx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+function playSound(type){
+  try{
+    const ctx = getAudioCtx();
+    if(type==='correct'){
+      [[261.63,0],[329.63,.1],[392,.2]].forEach(([f,t])=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.connect(g);g.connect(ctx.destination);
+        o.frequency.value=f;o.type='sine';
+        g.gain.setValueAtTime(0.25,ctx.currentTime+t);
+        g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+t+.45);
+        o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.45);
+      });
+    } else if(type==='wrong'){
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.frequency.value=160;o.type='sawtooth';
+      g.gain.setValueAtTime(0.18,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.35);
+      o.start(ctx.currentTime);o.stop(ctx.currentTime+.35);
+    } else if(type==='victory'){
+      [[523,0],[659,.13],[784,.26],[1047,.4]].forEach(([f,t])=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.connect(g);g.connect(ctx.destination);
+        o.frequency.value=f;o.type='sine';
+        g.gain.setValueAtTime(0.28,ctx.currentTime+t);
+        g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+t+.55);
+        o.start(ctx.currentTime+t);o.stop(ctx.currentTime+t+.55);
+      });
+    } else if(type==='next'){
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.frequency.value=440;o.type='sine';
+      g.gain.setValueAtTime(0.12,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.18);
+      o.start(ctx.currentTime);o.stop(ctx.currentTime+.18);
+    }
+  }catch(e){}
+}
+
+// ─────────────────────────────────────────────────────
+// CONFETTI
+// ─────────────────────────────────────────────────────
+function launchConfetti(score){
+  if(score < 10) return; // only if at least 1 correct
+  const canvas=document.getElementById('confettiCanvas');
+  const ctx2=canvas.getContext('2d');
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  canvas.style.display='block';
+  const colors=['#f72585','#7209b7','#3a0ca3','#4cc9f0','#4ade80','#fbbf24','#f87171','#60a5fa'];
+  const particles=[];
+  for(let i=0;i<180;i++){
+    particles.push({
+      x:Math.random()*canvas.width,y:-20-Math.random()*60,
+      w:Math.random()*14+5,h:Math.random()*7+3,
+      color:colors[Math.floor(Math.random()*colors.length)],
+      vy:Math.random()*4+2,vx:(Math.random()-.5)*5,
+      rot:Math.random()*360,rs:(Math.random()-.5)*12,
+      opacity:1
+    });
+  }
+  let frame=0;
+  (function animate(){
+    ctx2.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(p=>{
+      p.y+=p.vy;p.x+=p.vx;p.rot+=p.rs;
+      if(frame>120) p.opacity=Math.max(0,p.opacity-.012);
+      ctx2.save();ctx2.globalAlpha=p.opacity;
+      ctx2.translate(p.x,p.y);ctx2.rotate(p.rot*Math.PI/180);
+      ctx2.fillStyle=p.color;ctx2.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+      ctx2.restore();
+    });
+    frame++;
+    if(frame<200) requestAnimationFrame(animate);
+    else{ctx2.clearRect(0,0,canvas.width,canvas.height);canvas.style.display='none';}
+  })();
+}
+
+// ─────────────────────────────────────────────────────
+// BG CANVAS (floating dice on landing)
+// ─────────────────────────────────────────────────────
+(function initBg(){
+  const canvas=document.getElementById('bgCanvas');
+  const ctx=canvas.getContext('2d');
+  let w,h;
+  const dice=['🎲','🎯','🃏','⚀','⚁','⚂','⚃','⚄','⚅'];
+  const particles=[];
+  function resize(){
+    w=canvas.width=window.innerWidth;
+    h=canvas.height=window.innerHeight;
+  }
+  resize();window.addEventListener('resize',resize);
+  for(let i=0;i<18;i++){
+    particles.push({
+      x:Math.random()*w,y:Math.random()*h,
+      s:16+Math.random()*24,
+      vx:(Math.random()-.5)*.4,vy:-.2-Math.random()*.5,
+      emoji:dice[Math.floor(Math.random()*dice.length)],
+      opacity:.04+Math.random()*.08,
+      rot:Math.random()*360,rs:(Math.random()-.5)*1
+    });
+  }
+  function drawFrame(){
+    if(document.getElementById('landing').style.display==='none'){
+      ctx.clearRect(0,0,w,h);requestAnimationFrame(drawFrame);return;
+    }
+    ctx.clearRect(0,0,w,h);
+    particles.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;p.rot+=p.rs;
+      if(p.y<-40)p.y=h+20;
+      if(p.x<-40)p.x=w+20;
+      if(p.x>w+40)p.x=-20;
+      ctx.save();ctx.globalAlpha=p.opacity;
+      ctx.translate(p.x,p.y);ctx.rotate(p.rot*Math.PI/180);
+      ctx.font=`${p.s}px serif`;ctx.fillText(p.emoji,0,0);
+      ctx.restore();
+    });
+    requestAnimationFrame(drawFrame);
+  }
+  drawFrame();
+})();
+
+// ─────────────────────────────────────────────────────
 // ADVENTURE DATA
-// ─────────────────────────────────────────────
+// ─────────────────────────────────────────────────────
 const adventures = {
 
-// ══════════════════════════════════════════════
-// VERSION M – Die Glücksinsel (6 Szenen)
-// ══════════════════════════════════════════════
-M: {
-  label: 'Mindeststandard 🌱',
-  title: 'Die Glücksinsel',
-  totalScenes: 6,
-  scenes: [
+// ══════════════════════════════════════════════════
+// VERSION M – Die Glücksinsel
+// ══════════════════════════════════════════════════
+M:{label:'Mindeststandard 🌱',title:'Die Glücksinsel',totalScenes:6,scenes:[
 
-    // S0: Intro
-    { type: 'intro', chamber: 'Einleitung', title: 'Willkommen auf der Glücksinsel!',
-      story: `Du wachst auf einer geheimnisvollen Insel auf. 🌴 Ein Papagei landet auf deiner Schulter und sagt:
+{type:'intro',chamber:'Einleitung',title:'Willkommen auf der Glücksinsel! 🌴',
+ mascotLine:'Ahoi! Ich bin Polly! Bist du bereit für dein Abenteuer? 🦜',
+ story:`Du wachst auf einer geheimnisvollen Insel auf. 🌴 Ein bunter Papagei landet auf deiner Schulter:
 „Ich bin Polly, der Wächter der Glücksinsel! Nur wer die Rätsel des Zufalls löst, darf die Schatztruhe öffnen!"
-Du machst dich auf den Weg. Vor dir liegen fünf Abenteuer.`,
-      infoBox: `📚 Was du in diesem Abenteuer lernst:
+Du machst dich auf den Weg. Fünf Abenteuer warten auf dich.`,
+ infoBox:`📚 Was du in diesem Abenteuer lernst:
 • Was ist Wahrscheinlichkeit?
 • Wie rechnet man sie aus?
 • Was sind günstige und mögliche Ergebnisse?`,
-      nextLabel: 'Auf geht\'s! 🏝️' },
+ nextLabel:"Auf geht's! 🏝️"},
 
-    // S1: Würfelwächter
-    { type: 'question', chamber: 'Station 1 · Würfel-Wächter', title: 'Der Würfel-Wächter',
-      story: `Am Eingang der Insel steht ein riesiger Würfelstein. Der Wächter ruft:
-„Du hast zwei Würfel: einen 6er-Würfel (W6) und einen 8er-Würfel (W8). Du brauchst eine 6, um das Tor zu öffnen.
+{type:'question',chamber:'Station 1 · Würfel-Wächter',title:'Der Würfel-Wächter 🎲',
+ mascotLine:'Welcher Würfel wäre besser? Überlege! 🦜',
+ story:`Am Eingang steht ein riesiger Würfelstein. Der Wächter ruft:
+„Du hast zwei Würfel: einen 6er-Würfel (W6) und einen 8er-Würfel (W8). Du brauchst eine 6.
 Mit welchem Würfel hast du bessere Chancen?"`,
-      infoBox: `💡 Merke dir:
+ infoBox:`💡 Merke dir:
 Wahrscheinlichkeit = günstige Ergebnisse ÷ alle möglichen Ergebnisse
-Beim W6: Du brauchst eine 6 → 1 günstig, 6 mögliche → P = 1/6
-Beim W8: Du brauchst eine 6 → 1 günstig, 8 mögliche → P = 1/8`,
-      question: {
-        text: 'Mit welchem Würfel ist deine Chance auf eine 6 größer?',
-        hint: 'Tipp: Je weniger Seiten ein Würfel hat, desto wahrscheinlicher ist jede einzelne Seite.',
-        options: [
-          'A) Mit dem W6 – er hat weniger Seiten, also bessere Chancen.',
-          'B) Mit dem W8 – mehr Seiten bedeuten mehr Chancen.',
-          'C) Beide Würfel sind gleich gut.',
-          'D) Man kann es nicht sagen.'
-        ],
-        correct: 0,
-        correctFeedback: '✅ Richtig! Beim W6 ist P(6) = 1/6 ≈ 16,7 %. Beim W8 ist P(6) = 1/8 = 12,5 %. Der W6 ist besser! Das Tor öffnet sich.',
-        wrongFeedback: '❌ Leider falsch. Beim W6 ist P(6) = 1/6 ≈ 16,7 %. Beim W8 ist P(6) = 1/8 = 12,5 %. Der W6 hat bessere Chancen!'
-      }
-    },
+W6: P(6) = 1 ÷ 6 ≈ 16,7 %
+W8: P(6) = 1 ÷ 8 = 12,5 %`,
+ question:{text:'Mit welchem Würfel ist deine Chance auf eine 6 größer?',
+  hint:'Tipp: Je weniger Seiten ein Würfel hat, desto wahrscheinlicher ist jede Seite.',
+  options:['A) Mit dem W6 – er hat weniger Seiten, also bessere Chancen.','B) Mit dem W8 – mehr Seiten bedeuten mehr Chancen.','C) Beide Würfel sind gleich gut.','D) Man kann es nicht sagen.'],
+  correct:0,
+  correctFeedback:'✅ Richtig! W6: P(6) = 1/6 ≈ 16,7 %. W8: P(6) = 1/8 = 12,5 %. Der W6 ist besser! Das Tor öffnet sich! 🚪',
+  wrongFeedback:'❌ Nicht ganz. W6: P(6) = 1/6 ≈ 16,7 %. W8: P(6) = 1/8 = 12,5 %. Der W6 hat bessere Chancen!'}},
 
-    // S2: Zauberbeutel
-    { type: 'question', chamber: 'Station 2 · Zauberbeutel', title: 'Der Zauberbeutel',
-      story: `Polly führt dich zu einem Beutel voller Kugeln. „Greif blind hinein!", ruft er.
-Im Beutel sind: 3 rote, 2 blaue und 1 grüne Kugel. Insgesamt 6 Kugeln.
-„Wie groß ist deine Chance, eine rote Kugel zu ziehen?"`,
-      infoBox: `💡 Denk dran:
+{type:'question',chamber:'Station 2 · Zauberbeutel',title:'Der Zauberbeutel 🎒',
+ mascotLine:'3 rote, 2 blaue, 1 grüne – wie viele gibt es gesamt? 🦜',
+ story:`Polly führt dich zu einem Beutel voller Kugeln. „Greif blind hinein!"
+Im Beutel: 3 rote 🔴, 2 blaue 🔵, 1 grüne 🟢. Insgesamt 6 Kugeln.
+„Wie groß ist deine Chance, eine rote zu ziehen?"`,
+ infoBox:`💡 Denk dran:
 Günstige Ergebnisse = rote Kugeln = 3
 Alle möglichen Ergebnisse = alle Kugeln = 6
 P(rot) = 3 ÷ 6 = 1/2`,
-      question: {
-        text: 'Wie groß ist die Wahrscheinlichkeit, eine rote Kugel zu ziehen?',
-        hint: 'Tipp: Zähle alle roten Kugeln und teile durch die Gesamtzahl aller Kugeln.',
-        options: [
-          'A) 1/2 (= 50 %)',
-          'B) 1/3 (≈ 33 %)',
-          'C) 1/6 (≈ 17 %)',
-          'D) 2/3 (≈ 67 %)'
-        ],
-        correct: 0,
-        correctFeedback: '✅ Genau! P(rot) = 3/6 = 1/2 = 50 %. Jedes zweite Mal wärst du im Schnitt erfolgreich. Polly flattert begeistert!',
-        wrongFeedback: '❌ Schade. P(rot) = 3/6 = 1/2 = 50 %. Es gibt 3 rote von 6 Kugeln.'
-      }
-    },
+ question:{text:'Wie groß ist die Wahrscheinlichkeit, eine rote Kugel zu ziehen?',
+  hint:'Tipp: Zähle alle roten Kugeln und teile durch die Gesamtzahl.',
+  options:['A) 1/2 (= 50 %)','B) 1/3 (≈ 33 %)','C) 1/6 (≈ 17 %)','D) 2/3 (≈ 67 %)'],
+  correct:0,
+  correctFeedback:'✅ Genau! P(rot) = 3/6 = 1/2 = 50 %. Jedes zweite Mal erfolgreich! Polly flattert begeistert! 🦜',
+  wrongFeedback:'❌ Schade. P(rot) = 3/6 = 1/2 = 50 %. 3 rote von 6 Kugeln.'}},
 
-    // S3: Glücksrad
-    { type: 'question', chamber: 'Station 3 · Glücksrad', title: 'Das Glücksrad',
-      story: `Ein buntes Glücksrad dreht sich in der Mitte der Insel. Es hat 8 gleich große Felder:
-4 rote, 2 blaue, 2 grüne.
-„Drehe das Rad! Du gewinnst, wenn es auf Rot landet!", sagt Polly.`,
-      visual: `<svg class="tree-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="100" cy="100" r="90" fill="#eee" stroke="#ccc" stroke-width="2"/>
-        <!-- 8 sectors, each 45° -->
-        <!-- rot: 0°,45°,90°,135° | blau: 180°,225° | grün: 270°,315° -->
-        <path d="M100,100 L190,100 A90,90 0 0,1 163.6,163.6 Z" fill="#e74c3c"/>
-        <path d="M100,100 L163.6,163.6 A90,90 0 0,1 100,190 Z" fill="#e74c3c"/>
-        <path d="M100,100 L100,190 A90,90 0 0,1 36.4,163.6 Z" fill="#e74c3c"/>
-        <path d="M100,100 L36.4,163.6 A90,90 0 0,1 10,100 Z" fill="#e74c3c"/>
-        <path d="M100,100 L10,100 A90,90 0 0,1 36.4,36.4 Z" fill="#3498db"/>
-        <path d="M100,100 L36.4,36.4 A90,90 0 0,1 100,10 Z" fill="#3498db"/>
-        <path d="M100,100 L100,10 A90,90 0 0,1 163.6,36.4 Z" fill="#27ae60"/>
-        <path d="M100,100 L163.6,36.4 A90,90 0 0,1 190,100 Z" fill="#27ae60"/>
-        <circle cx="100" cy="100" r="8" fill="#fff" stroke="#666" stroke-width="2"/>
-        <text x="100" y="116" text-anchor="middle" font-size="8" fill="#333">4R 2B 2G</text>
-      </svg>`,
-      question: {
-        text: 'Wie groß ist die Wahrscheinlichkeit, dass das Rad auf Rot landet?',
-        hint: 'Tipp: 4 von 8 Feldern sind rot.',
-        options: [
-          'A) 1/2 (= 50 %)',
-          'B) 1/4 (= 25 %)',
-          'C) 4/3 – das geht nicht!',
-          'D) 1/8 (= 12,5 %)'
-        ],
-        correct: 0,
-        correctFeedback: '✅ Super! P(Rot) = 4/8 = 1/2 = 50 %. Das Rad dreht sich und zeigt Rot – du gewinnst die nächste Wegmarkierung!',
-        wrongFeedback: '❌ Fast! P(Rot) = 4/8 = 1/2 = 50 %. 4 rote Felder von 8 gesamt.'
-      }
-    },
+{type:'question',chamber:'Station 3 · Glücksrad',title:'Das Glücksrad 🎡',
+ mascotLine:'4 rote, 2 blaue, 2 grüne – auf welcher Farbe würde ich landen? 🦜',
+ story:`Ein buntes Glücksrad dreht sich. Es hat 8 gleich große Felder:
+4 rote 🔴, 2 blaue 🔵, 2 grüne 🟢.
+„Drehe das Rad! Du gewinnst, wenn es auf Rot landet!"`,
+ visual:`<svg class="tree-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="100" cy="100" r="90" fill="#eee" stroke="#ccc" stroke-width="2"/>
+  <path d="M100,100 L190,100 A90,90 0 0,1 163.6,163.6 Z" fill="#e74c3c"/>
+  <path d="M100,100 L163.6,163.6 A90,90 0 0,1 100,190 Z" fill="#e74c3c"/>
+  <path d="M100,100 L100,190 A90,90 0 0,1 36.4,163.6 Z" fill="#e74c3c"/>
+  <path d="M100,100 L36.4,163.6 A90,90 0 0,1 10,100 Z" fill="#e74c3c"/>
+  <path d="M100,100 L10,100 A90,90 0 0,1 36.4,36.4 Z" fill="#3498db"/>
+  <path d="M100,100 L36.4,36.4 A90,90 0 0,1 100,10 Z" fill="#3498db"/>
+  <path d="M100,100 L100,10 A90,90 0 0,1 163.6,36.4 Z" fill="#27ae60"/>
+  <path d="M100,100 L163.6,36.4 A90,90 0 0,1 190,100 Z" fill="#27ae60"/>
+  <circle cx="100" cy="100" r="10" fill="#fff" stroke="#666" stroke-width="2"/>
+  <text x="60" y="80" font-size="11" fill="white" font-weight="bold">🔴🔴</text>
+  <text x="120" y="160" font-size="11" fill="white" font-weight="bold">🔴🔴</text>
+  <text x="20" y="115" font-size="11" fill="white">🔵🔵</text>
+  <text x="130" y="45" font-size="11" fill="white">🟢🟢</text>
+ </svg>`,
+ question:{text:'Wie groß ist die Wahrscheinlichkeit, dass das Rad auf Rot landet?',
+  hint:'Tipp: 4 von 8 Feldern sind rot.',
+  options:['A) 1/2 (= 50 %)','B) 1/4 (= 25 %)','C) 3/8 (= 37,5 %)','D) 1/8 (= 12,5 %)'],
+  correct:0,
+  correctFeedback:'✅ Super! P(Rot) = 4/8 = 1/2 = 50 %. Das Rad dreht sich und zeigt Rot! 🎉',
+  wrongFeedback:'❌ Fast! P(Rot) = 4/8 = 1/2 = 50 %. 4 rote Felder von 8 gesamt.'}},
 
-    // S4: Schatzkarten
-    { type: 'question', chamber: 'Station 4 · Schatzkarten', title: 'Die Schatzkarten',
-      story: `Vor der Truhe liegen 10 Karten verdeckt auf dem Tisch. Polly sagt:
-„4 Karten zeigen Gold 🥇, 6 Karten zeigen eine Niete 💀. Ziehe eine Karte – wenn es Gold ist, öffnet sich die Truhe!"`,
-      question: {
-        text: 'Wie groß ist deine Chance, eine Goldkarte zu ziehen?',
-        hint: 'Tipp: Günstige Ergebnisse = 4 Goldkarten. Alle Ergebnisse = 10 Karten.',
-        options: [
-          'A) 40 % (= 4/10 = 2/5)',
-          'B) 60 % (= 6/10)',
-          'C) 25 % (= 1/4)',
-          'D) 10 % (= 1/10)'
-        ],
-        correct: 0,
-        correctFeedback: '✅ Perfekt! P(Gold) = 4/10 = 2/5 = 40 %. Du hast eine 40-prozentige Chance. Du ziehst – und es ist Gold! Die Truhe öffnet sich! 🎉',
-        wrongFeedback: '❌ Leider nicht. P(Gold) = 4/10 = 2/5 = 40 %. 4 Goldkarten von 10 gesamt.'
-      }
-    },
+{type:'question',chamber:'Station 4 · Schatzkarten',title:'Die Schatzkarten 🃏',
+ mascotLine:'4 Gold, 6 Nieten – ich würde trotzdem ziehen! 🦜',
+ story:`Vor der Truhe liegen 10 Karten verdeckt auf dem Tisch.
+4 Karten zeigen Gold 🥇, 6 Karten zeigen eine Niete 💀.
+„Ziehe eine Karte – wenn es Gold ist, öffnet sich die Truhe!"`,
+ question:{text:'Wie groß ist deine Chance, eine Goldkarte zu ziehen?',
+  hint:'Tipp: Günstige Ergebnisse = 4 Goldkarten. Alle Ergebnisse = 10 Karten.',
+  options:['A) 40 % (= 4/10 = 2/5)','B) 60 % (= 6/10)','C) 25 % (= 1/4)','D) 10 % (= 1/10)'],
+  correct:0,
+  correctFeedback:'✅ Perfekt! P(Gold) = 4/10 = 40 %. Du ziehst – und es ist Gold! Die Truhe öffnet sich! 🎉🏆',
+  wrongFeedback:'❌ Leider nicht. P(Gold) = 4/10 = 2/5 = 40 %. 4 Goldkarten von 10 gesamt.'}},
 
-    // S5: Final
-    { type: 'final', chamber: 'Ziel', title: '🏆 Die Glücksinsel ist gerettet!',
-      story: `Polly fliegt jubelnd um dich herum: „Du hast alle Rätsel gelöst! Die Schatztruhe gehört dir!"
-Du öffnest die Truhe – darin liegt kein Gold, sondern Wissen über den Zufall. Das wertvollste Gut der Insel!`,
-      summary: [
-        'Wahrscheinlichkeit = günstige Ergebnisse ÷ alle möglichen Ergebnisse',
-        'Laplace-Experiment: Alle Ergebnisse sind gleich wahrscheinlich',
-        'W6 hat bessere Chancen auf eine 6 als W8 (1/6 > 1/8)',
-        'P(rot) aus Beutel mit 3R,2B,1G: 3/6 = 1/2 = 50 %',
-        'Wahrscheinlichkeiten liegen immer zwischen 0 und 1 (= 0 % und 100 %)'
-      ],
-      reflection: 'Stell dir vor, ein Glücksrad hat 12 Felder: 3 gelbe, 5 rote, 4 blaue. Auf welche Farbe würdest du setzen und warum? Schreib deine Antwort auf einen Zettel!'
-    }
-  ]
-},
+{type:'final',chamber:'Ziel 🏆',title:'Die Glücksinsel ist gerettet! 🎉',
+ mascotLine:'Ich bin so stolz auf dich! Du hast alle Rätsel gelöst! 🦜🏆',
+ story:`Polly fliegt jubelnd um dich herum: „Du hast alle Rätsel gelöst!
+Die Schatztruhe gehört dir!" Du öffnest sie – darin liegt kein Gold,
+sondern Wissen über den Zufall. Das wertvollste Gut der Insel! 🌟`,
+ summary:['Wahrscheinlichkeit = günstige Ergebnisse ÷ alle möglichen Ergebnisse','Laplace-Experiment: Alle Ergebnisse gleich wahrscheinlich','W6 hat bessere Chancen auf eine 6 als W8 (1/6 > 1/8)','P(rot) aus 3R,2B,1G: 3/6 = 1/2 = 50 %','Wahrscheinlichkeiten: immer zwischen 0 und 1'],
+ reflection:'Stell dir vor, ein Glücksrad hat 12 Felder: 3 gelbe, 5 rote, 4 blaue. Auf welche Farbe würdest du setzen und warum? Schreib deine Antwort auf!'}
+]},
 
-// ══════════════════════════════════════════════
-// VERSION R – Die Akademie des Zufalls (8 Szenen)
-// ══════════════════════════════════════════════
-R: {
-  label: 'Regelstandard ⚡',
-  title: 'Die Akademie des Zufalls',
-  totalScenes: 8,
-  scenes: [
+// ══════════════════════════════════════════════════
+// VERSION R – Die Akademie des Zufalls
+// ══════════════════════════════════════════════════
+R:{label:'Regelstandard ⚡',title:'Die Akademie des Zufalls',totalScenes:8,scenes:[
 
-    // S0: Intro
-    { type: 'intro', chamber: 'Einleitung', title: 'Willkommen in der Akademie des Zufalls!',
-      story: `Du betrittst die legendäre Akademie des Zufalls. Professorin Zara begrüßt dich:
+{type:'intro',chamber:'Einleitung',title:'Willkommen in der Akademie des Zufalls! ⚡',
+ mascotLine:'Die Prüfung beginnt. Zeige mir dein Können!',
+ story:`Du betrittst die legendäre Akademie des Zufalls. Professorin Zara begrüßt dich:
 „Nur wer Laplace-Experimente beherrscht, Baumdiagramme liest und die Pfadregel anwenden kann,
-wird zum Akademiemitglied ernannt. Bist du bereit für die Prüfung?"`,
-      infoBox: `📚 Themen dieser Prüfung:
-• Laplace-Experimente und Wahrscheinlichkeiten berechnen
-• Wahrscheinlichkeiten vergleichen und begründen
+wird zum Akademiemitglied ernannt. Bist du bereit?"`,
+ infoBox:`📚 Themen dieser Prüfung:
+• Laplace-Experimente und Wahrscheinlichkeiten berechnen und vergleichen
 • Baumdiagramme – mit und ohne Zurücklegen
-• Pfadregel: Wahrscheinlichkeiten auf einem Pfad multiplizieren
-• Summenregel: Wahrscheinlichkeiten günstiger Pfade addieren`,
-      nextLabel: 'Prüfung beginnen ⚡' },
+• Pfadregel: Pfadwahrscheinlichkeiten multiplizieren
+• Summenregel: günstige Pfade addieren`,
+ nextLabel:'Prüfung beginnen ⚡'},
 
-    // S1: Würfelvergleich
-    { type: 'question', chamber: 'Aufgabe 1 · Laplace', title: 'Die Würfel-Prüfung',
-      story: `Professorin Zara legt zwei Würfel auf den Tisch: einen W6 und einen W8.
+{type:'question',chamber:'Aufgabe 1 · Laplace',title:'Die Würfel-Prüfung 🎲',
+ mascotLine:'Nutze die Laplace-Formel und begründe!',
+ story:`Zara legt W6 und W8 auf den Tisch.
 „Du musst eine 6 würfeln. Begründe, welchen Würfel du wählst."`,
-      infoBox: `📐 Laplace-Formel: P(E) = günstige Ergebnisse / alle möglichen Ergebnisse
-Beim W6: P(6) = 1/6 ≈ 16,67 %
-Beim W8: P(6) = 1/8 = 12,5 %
-Vergleich: 1/6 > 1/8, denn 8 > 6 im Nenner bedeutet kleinere Wahrscheinlichkeit.`,
-      question: {
-        text: 'Welche Aussage begründet die richtige Wahl korrekt?',
-        hint: 'Tipp: Vergleiche die Brüche 1/6 und 1/8. Welcher ist größer?',
-        options: [
-          'A) Ich wähle den W6: P(6) = 1/6 ≈ 16,7 % > P(6) = 1/8 = 12,5 % beim W8.',
-          'B) Ich wähle den W8: Mehr Seiten bedeuten mehr Möglichkeiten, die 6 zu treffen.',
-          'C) Beide Würfel sind gleichwertig, da die 6 auf beiden nur einmal vorkommt.',
-          'D) Der W8 ist besser, weil 8 > 6.'
-        ],
-        correct: 0,
-        correctFeedback: '✅ Exzellent! Du hast die Laplace-Formel korrekt angewendet und die Wahrscheinlichkeiten überzeugend verglichen.',
-        wrongFeedback: '❌ Nicht korrekt. Die Anzahl der günstigen Ergebnisse ist bei beiden gleich (1), aber die Gesamtzahl unterscheidet sich. Mehr Seiten → kleinere Wahrscheinlichkeit für jede einzelne Seite.'
-      }
-    },
+ infoBox:`📐 Laplace-Formel: P(E) = günstige Ergebnisse / alle möglichen Ergebnisse
+W6: P(6) = 1/6 ≈ 16,67 %
+W8: P(6) = 1/8 = 12,5 %
+Differenz: 1/6 > 1/8, da 6 < 8 im Nenner.`,
+ question:{text:'Welche Aussage begründet die richtige Wahl korrekt?',
+  hint:'Tipp: Vergleiche die Brüche 1/6 und 1/8. Welcher ist größer?',
+  options:['A) Ich wähle den W6: P(6)=1/6≈16,7 % > P(6)=1/8=12,5 % beim W8.','B) Ich wähle den W8: Mehr Seiten bedeuten mehr Möglichkeiten.','C) Beide gleichwertig, da die 6 auf beiden nur einmal vorkommt.','D) W8 ist besser, weil 8 > 6.'],
+  correct:0,
+  correctFeedback:'✅ Exzellent! Laplace korrekt angewendet und überzeugend verglichen. Zara nickt anerkennend! ⚡',
+  wrongFeedback:'❌ Mehr Seiten → kleinere Wahrscheinlichkeit je Seite. P(W6)=1/6 > P(W8)=1/8.'}},
 
-    // S2: Skat P(Ass)
-    { type: 'question', chamber: 'Aufgabe 2 · Skat', title: 'Das Skat-Kartenspiel',
-      story: `Zara zeigt ein Skat-Spiel. „Ein Skat-Spiel hat 32 Karten: 4 Farben (Kreuz, Pik, Herz, Karo),
-jede Farbe mit 8 Karten (7, 8, 9, 10, Bube, Dame, König, Ass).
-Wie groß ist P(Ass), wenn du zufällig eine Karte ziehst?"`,
-      infoBox: `📐 Skat-Karten:
-32 Karten gesamt · 4 Asse (je eine pro Farbe) · 8 Herzkarten`,
-      question: {
-        text: 'Berechne P(Ass) beim zufälligen Ziehen einer Karte aus dem Skat-Spiel.',
-        hint: 'Tipp: Es gibt 4 Asse und 32 Karten insgesamt.',
-        options: [
-          'A) P(Ass) = 4/32 = 1/8 = 12,5 %',
-          'B) P(Ass) = 4/16 = 1/4 = 25 %',
-          'C) P(Ass) = 1/32 ≈ 3,1 %',
-          'D) P(Ass) = 4/4 = 1 = 100 %'
-        ],
-        correct: 0,
-        correctFeedback: '✅ Richtig! 4 Asse von 32 Karten: P(Ass) = 4/32 = 1/8 = 12,5 %. Zara nickt anerkennend.',
-        wrongFeedback: '❌ Leider nicht. P(Ass) = 4/32 = 1/8 = 12,5 %. 4 günstige Ergebnisse, 32 mögliche.'
-      }
-    },
+{type:'question',chamber:'Aufgabe 2 · Skat',title:'Das Skat-Kartenspiel ♠',
+ mascotLine:'32 Karten, 4 Asse – rechne sorgfältig!',
+ story:`Zara zeigt ein Skat-Spiel. 32 Karten: 4 Farben (♣♠♥♦), je 8 Karten (7,8,9,10,B,D,K,As).
+„Wie groß ist P(Ass), wenn du zufällig eine Karte ziehst?"`,
+ infoBox:`📐 Skat: 32 Karten gesamt · 4 Asse · 8 Herzkarten`,
+ question:{text:'Berechne P(Ass) beim zufälligen Ziehen aus dem Skat-Spiel.',
+  hint:'Tipp: 4 Asse, 32 Karten insgesamt.',
+  options:['A) P(Ass) = 4/32 = 1/8 = 12,5 %','B) P(Ass) = 4/16 = 1/4 = 25 %','C) P(Ass) = 1/32 ≈ 3,1 %','D) P(Ass) = 4/4 = 100 %'],
+  correct:0,
+  correctFeedback:'✅ Richtig! 4 Asse von 32: P(Ass) = 4/32 = 1/8 = 12,5 %. Zara nickt! ♠',
+  wrongFeedback:'❌ P(Ass) = 4/32 = 1/8 = 12,5 %. 4 günstige von 32 möglichen.'}},
 
-    // S3: Skat P(Herz)
-    { type: 'question', chamber: 'Aufgabe 3 · Skat', title: 'Herzkarten im Skat',
-      story: `„Gut!", sagt Zara. „Jetzt eine verwandte Frage: Wie groß ist die Wahrscheinlichkeit,
-eine Herzkarte zu ziehen? Denk an alle 8 Herzkarten."`,
-      question: {
-        text: 'Wie groß ist P(Herzkarte)?',
-        hint: 'Tipp: Es gibt 8 Herzkarten und 32 Karten insgesamt.',
-        options: [
-          'A) P(Herz) = 8/32 = 1/4 = 25 %',
-          'B) P(Herz) = 8/16 = 1/2 = 50 %',
-          'C) P(Herz) = 4/32 = 1/8 = 12,5 %',
-          'D) P(Herz) = 1/8 = 12,5 %'
-        ],
-        correct: 0,
-        correctFeedback: '✅ Perfekt! 8 Herzkarten von 32: P(Herz) = 8/32 = 1/4 = 25 %. Doppelt so hoch wie P(Ass)!',
-        wrongFeedback: '❌ Nein. P(Herz) = 8/32 = 1/4 = 25 %. 8 günstige Ergebnisse (alle Herzkarten) von 32 möglichen.'
-      }
-    },
+{type:'question',chamber:'Aufgabe 3 · Skat',title:'Herzkarten im Skat ♥',
+ mascotLine:'Wie viele Herzkarten gibt es? Denk daran!',
+ story:`„Gut! Jetzt: Wie groß ist P(Herzkarte)?
+Denk an alle 8 Herzkarten im Skat-Spiel."`,
+ question:{text:'Wie groß ist P(Herzkarte)? Und wie verhält sie sich zu P(Ass)?',
+  hint:'Tipp: 8 Herzkarten und 32 Karten insgesamt.',
+  options:['A) P(Herz)=8/32=1/4=25 % – doppelt so groß wie P(Ass)','B) P(Herz)=8/16=1/2=50 %','C) P(Herz)=4/32=1/8=12,5 %','D) P(Herz)=P(Ass), da gleiches Spiel'],
+  correct:0,
+  correctFeedback:'✅ Perfekt! P(Herz)=8/32=1/4=25 %. Genau doppelt so groß wie P(Ass)=1/8! ♥',
+  wrongFeedback:'❌ P(Herz)=8/32=1/4=25 %. 8 günstige Ergebnisse von 32.'}},
 
-    // S4: Bällebad
-    { type: 'question', chamber: 'Aufgabe 4 · Bällebad', title: 'Das Bälle-Labor',
-      story: `Im Bälle-Labor steht ein riesiges Becken mit bunten Bällen:
-300 blaue · 250 orange · 400 rote · 350 grüne · 450 gelbe
+{type:'question',chamber:'Aufgabe 4 · Bällebad',title:'Das Bälle-Labor 🔴',
+ mascotLine:'Berechne die Gesamtzahl zuerst!',
+ story:`Im Labor: 300 blau · 250 orange · 400 rot · 350 grün · 450 gelb.
 „Berechne P(rot), wenn du blind einen Ball greifst!"`,
-      infoBox: `📐 Gesamtzahl: 300+250+400+350+450 = 1750 Bälle
-Rote Bälle: 400`,
-      question: {
-        text: 'Wie groß ist P(roter Ball)?',
-        hint: 'Tipp: 400 rote Bälle von insgesamt 1750 Bällen.',
-        options: [
-          'A) P(rot) = 400/1750 ≈ 22,9 %',
-          'B) P(rot) = 400/1000 = 40 %',
-          'C) P(rot) = 400/500 = 80 %',
-          'D) P(rot) = 1/5 = 20 % (weil es 5 Farben gibt)'
-        ],
-        correct: 0,
-        correctFeedback: '✅ Korrekt! P(rot) = 400/1750 ≈ 0,229 ≈ 22,9 %. Wichtig: Nicht einfach 1/5, weil die Farben unterschiedlich oft vorkommen!',
-        wrongFeedback: '❌ Aufgepasst! P(rot) = 400/1750 ≈ 22,9 %. Es sind keine gleich verteilten Farben – also kein Laplace-Experiment!'
-      }
-    },
+ infoBox:`📐 Gesamtzahl: 300+250+400+350+450 = 1750 Bälle · Rote Bälle: 400`,
+ question:{text:'Wie groß ist P(roter Ball)?',
+  hint:'Tipp: 400 rote Bälle von insgesamt 1750 Bällen.',
+  options:['A) P(rot) = 400/1750 ≈ 22,9 %','B) P(rot) = 400/1000 = 40 %','C) P(rot) = 1/5 = 20 % (weil 5 Farben)','D) P(rot) = 400/500 = 80 %'],
+  correct:0,
+  correctFeedback:'✅ Korrekt! 400/1750 ≈ 22,9 %. Kein Laplace – ungleiche Verteilung! 🔴',
+  wrongFeedback:'❌ P(rot)=400/1750≈22,9 %. Nicht 1/5 – die Farben sind unterschiedlich oft vertreten!'}},
 
-    // S5: Baumdiagramm MIT Zurücklegen
-    { type: 'question', chamber: 'Aufgabe 5 · Baumdiagramm', title: 'Urne – mit Zurücklegen',
-      story: `Eine Urne enthält: 3 blaue, 1 grüne, 4 rote Kugeln (= 8 gesamt).
-Du ziehst zweimal – jeweils MIT Zurücklegen. Nach dem ersten Zug legst du die Kugel zurück.`,
-      infoBox: `📐 MIT Zurücklegen: Die Wahrscheinlichkeiten ändern sich nicht!
-Erster Zug: P(blau) = 3/8, P(grün) = 1/8, P(rot) = 4/8
-Zweiter Zug: Gleich wie erster, weil zurückgelegt.
-Pfadregel: Wahrscheinlichkeiten auf einem Pfad multiplizieren.`,
-      visual: `<svg class="tree-svg" viewBox="0 0 460 220" xmlns="http://www.w3.org/2000/svg">
-        <style>.tl{font-size:12px;font-family:Arial}.tp{font-size:11px;font-family:Arial;fill:#555}</style>
-        <!-- Wurzel -->
-        <circle cx="40" cy="110" r="12" fill="#888"/>
-        <text x="40" y="114" text-anchor="middle" class="tl" fill="white">U</text>
-        <!-- Äste 1. Zug -->
-        <line x1="52" y1="110" x2="148" y2="38" stroke="#555" stroke-width="1.5"/>
-        <line x1="52" y1="110" x2="148" y2="110" stroke="#555" stroke-width="1.5"/>
-        <line x1="52" y1="110" x2="148" y2="182" stroke="#555" stroke-width="1.5"/>
-        <text x="90" y="60" class="tp">3/8</text>
-        <text x="90" y="106" class="tp">1/8</text>
-        <text x="90" y="155" class="tp">4/8</text>
-        <!-- Knoten Zug 1 -->
-        <circle cx="158" cy="38" r="12" fill="#3498db"/><text x="158" y="42" text-anchor="middle" class="tl" fill="white">B</text>
-        <circle cx="158" cy="110" r="12" fill="#27ae60"/><text x="158" y="114" text-anchor="middle" class="tl" fill="white">G</text>
-        <circle cx="158" cy="182" r="12" fill="#e74c3c"/><text x="158" y="186" text-anchor="middle" class="tl" fill="white">R</text>
-        <!-- Äste 2. Zug (nur von blau) -->
-        <line x1="170" y1="38" x2="266" y2="14" stroke="#3498db" stroke-width="1.5"/>
-        <line x1="170" y1="38" x2="266" y2="38" stroke="#3498db" stroke-width="1.5"/>
-        <line x1="170" y1="38" x2="266" y2="62" stroke="#3498db" stroke-width="1.5"/>
-        <text x="210" y="18" class="tp">3/8</text>
-        <text x="210" y="35" class="tp">1/8</text>
-        <text x="210" y="56" class="tp">4/8</text>
-        <!-- Endknoten von blau -->
-        <circle cx="276" cy="14" r="12" fill="#3498db"/><text x="276" y="18" text-anchor="middle" class="tl" fill="white">B</text>
-        <circle cx="276" cy="38" r="12" fill="#27ae60"/><text x="276" y="42" text-anchor="middle" class="tl" fill="white">G</text>
-        <circle cx="276" cy="62" r="12" fill="#e74c3c"/><text x="276" y="66" text-anchor="middle" class="tl" fill="white">R</text>
-        <!-- Pfad-Ergebnisse -->
-        <text x="298" y="18" class="tp">BB: 3/8·3/8 = 9/64</text>
-        <text x="298" y="42" class="tp">BG: 3/8·1/8 = 3/64</text>
-        <text x="298" y="66" class="tp" fill="#c0392b">BR: 3/8·4/8 = 12/64 ←</text>
-        <text x="32" y="210" class="tp" fill="#333">Äste von Grün und Rot verlaufen genauso (MIT Zurücklegen)</text>
-      </svg>`,
-      question: {
-        text: 'Wie groß ist P(blau, dann rot) beim Ziehen MIT Zurücklegen?',
-        hint: 'Tipp: Pfadregel – multipliziere die Wahrscheinlichkeiten: P(blau) × P(rot)',
-        options: [
-          'A) 3/8 × 4/8 = 12/64 ≈ 18,75 %',
-          'B) 3/8 + 4/8 = 7/8 ≈ 87,5 %',
-          'C) 3/7 × 4/7 = 12/49 ≈ 24,5 %',
-          'D) 4/8 × 3/7 = 12/56 ≈ 21,4 %'
-        ],
-        correct: 0,
-        correctFeedback: '✅ Richtig! MIT Zurücklegen bleiben die Wahrscheinlichkeiten konstant: 3/8 × 4/8 = 12/64 ≈ 18,75 %.',
-        wrongFeedback: '❌ Aufgepasst! MIT Zurücklegen ändert sich nichts: P(blau)=3/8, P(rot)=4/8. Pfadregel: 3/8 × 4/8 = 12/64.'
-      }
-    },
-
-    // S6: OHNE Zurücklegen
-    { type: 'question', chamber: 'Aufgabe 6 · Baumdiagramm', title: 'Urne – ohne Zurücklegen',
-      story: `Jetzt das Gleiche OHNE Zurücklegen. Die gezogene Kugel kommt nicht zurück.
-Urne: 3 blau, 1 grün, 4 rot (= 8 gesamt).
-„Berechne P(rot, dann blau)!", sagt Zara.`,
-      infoBox: `📐 OHNE Zurücklegen: Nach dem ersten Zug ändert sich die Anzahl!
-Erster Zug rot: P(rot) = 4/8 – jetzt sind noch 7 Kugeln in der Urne, davon 3 blaue.
-Zweiter Zug blau: P(blau | rot zuvor) = 3/7
-Pfadregel: 4/8 × 3/7 = 12/56 ≈ 21,4 %`,
-      question: {
-        text: 'Wie groß ist P(rot, dann blau) beim Ziehen OHNE Zurücklegen?',
-        hint: 'Tipp: Beim zweiten Zug sind noch 7 Kugeln übrig.',
-        options: [
-          'A) 4/8 × 3/7 = 12/56 ≈ 21,4 %',
-          'B) 4/8 × 3/8 = 12/64 ≈ 18,75 %',
-          'C) 4/7 × 3/6 ≈ 28,6 %',
-          'D) 3/8 × 4/7 = 12/56 ≈ 21,4 %'
-        ],
-        correct: 0,
-        correctFeedback: '✅ Bravo! OHNE Zurücklegen: P(rot)=4/8, dann P(blau)=3/7, weil nur noch 7 Kugeln übrig. Ergebnis: 12/56 ≈ 21,4 %.',
-        wrongFeedback: '❌ Fast! OHNE Zurücklegen: Erster Zug P(rot)=4/8. Danach noch 7 Kugeln, davon 3 blau: P(blau)=3/7. Zusammen: 12/56 ≈ 21,4 %.'
-      }
-    },
-
-    // S7: Final
-    { type: 'final', chamber: 'Abschluss', title: '🏆 Akademiemitglied!',
-      story: `„Glückwunsch!", ruft Professorin Zara. „Du hast alle Prüfungen der Akademie des Zufalls bestanden!
-Du wirst hiermit zum Akademiemitglied ernannt. Dein Verständnis der Stochastik ist beeindruckend!"`,
-      summary: [
-        'Laplace: P(E) = günstige Ergebnisse / alle möglichen Ergebnisse',
-        'W6 besser als W8 für eine 6: P(6) = 1/6 > 1/8',
-        'P(Ass) im Skat: 4/32 = 1/8 = 12,5 %',
-        'P(Herz) im Skat: 8/32 = 1/4 = 25 %',
-        'Bällebad P(rot) = 400/1750 ≈ 22,9 % (kein Laplace!)',
-        'MIT Zurücklegen: Wahrscheinlichkeiten bleiben gleich – Pfadregel multiplizieren',
-        'OHNE Zurücklegen: Gesamtzahl sinkt – angepasste Brüche verwenden'
-      ],
-      reflection: 'Eine Urne hat 5 rote und 3 blaue Kugeln. Du ziehst zweimal OHNE Zurücklegen. Ist P(rot, blau) gleich wie P(blau, rot)? Begründe deine Antwort und berechne beide Wahrscheinlichkeiten.'
-    }
-  ]
-},
-
-// ══════════════════════════════════════════════
-// VERSION E – Die Stochastik-Akademie (8 Szenen)
-// ══════════════════════════════════════════════
-E: {
-  label: 'Expertenstandard 🏆',
-  title: 'Die Stochastik-Akademie',
-  totalScenes: 8,
-  scenes: [
-
-    // S0: Intro
-    { type: 'intro', chamber: 'Einleitung', title: 'Die Stochastik-Akademie erwartet dich!',
-      story: `Du hast die höchste Ebene der Akademie erreicht. Hier warten komplexe Aufgaben,
-die direkt aus den Arbeitsheften stammen. Professor Stoch begrüßt dich:
-„Hier werden Fachbegriffe, Baumdiagramme, Pfad- und Summenregel meisterhaft beherrscht.
-Nur die Besten erhalten das goldene Zertifikat."`,
-      infoBox: `📚 Fachbegriffe dieser Prüfung:
-Laplace-Experiment · Ergebnisraum · günstige Ergebnisse
-Baumdiagramm · Pfadregel · Summenregel · Komplementwahrscheinlichkeit
-MIT Zurücklegen (unabhängige Ereignisse) · OHNE Zurücklegen (abhängige Ereignisse)`,
-      nextLabel: 'Expertenmodus starten 🏆' },
-
-    // S1: Würfelvergleich exakt
-    { type: 'question', chamber: 'AB 1 · Würfelvergleich', title: 'Würfelvergleich – Exakte Analyse',
-      story: `Du spielst ein Würfelspiel. Du willst eine 6 würfeln. Zur Auswahl stehen:
-W6 (sechsseitig) und W8 (achtseitig). Berechne beide Wahrscheinlichkeiten exakt.`,
-      infoBox: `📐 Ergebnisraum W6 = {1,2,3,4,5,6}, |Ω| = 6, |E| = 1
-Ergebnisraum W8 = {1,2,3,4,5,6,7,8}, |Ω| = 8, |E| = 1
-P(W6: 6) = 1/6 ≈ 16,67 %
-P(W8: 6) = 1/8 = 12,5 %
-Differenz: 1/6 - 1/8 = 4/24 - 3/24 = 1/24 ≈ 4,17 Prozentpunkte`,
-      question: {
-        text: 'Welche Aussage zur exakten Differenz der Wahrscheinlichkeiten ist korrekt?',
-        hint: 'Tipp: Bringe 1/6 und 1/8 auf einen gemeinsamen Nenner (24).',
-        options: [
-          'A) P(W6) - P(W8) = 1/24 ≈ 4,17 Pp; W6 ist günstiger.',
-          'B) P(W6) - P(W8) = 1/14; da 6+8 = 14.',
-          'C) Die Differenz ist 0, da in beiden nur eine 6 vorkommt.',
-          'D) P(W8) > P(W6) weil 8 > 6.'
-        ],
-        correct: 0,
-        correctFeedback: '✅ Exzellent! 1/6 - 1/8 = 4/24 - 3/24 = 1/24 ≈ 4,17 Pp. Der W6 ist um genau 1/24 besser.',
-        wrongFeedback: '❌ Berechne sorgfältig: 1/6 - 1/8. Gemeinsamer Nenner 24: 4/24 - 3/24 = 1/24 ≈ 4,17 Prozentpunkte.'
-      }
-    },
-
-    // S2: Skat P(Ass) exakt
-    { type: 'question', chamber: 'AB 2 · Skat', title: 'Skat-Analyse: Asse',
-      story: `Skat-Spiel: 32 Karten, 4 Farben (♣♠♥♦), je 8 Karten (7–As).
-Ereignis A: „Die gezogene Karte ist ein Ass."
-Bestimme P(A) und gib das Ergebnis als Bruch, Dezimalzahl und Prozent an.`,
-      infoBox: `📐 |Ω| = 32 · |A| = 4 (vier Asse: ♣A, ♠A, ♥A, ♦A)
-P(A) = 4/32 = 1/8 = 0,125 = 12,5 %`,
-      question: {
-        text: 'Welche vollständige Darstellung von P(Ass) ist korrekt?',
-        hint: 'Tipp: Kürze 4/32 vollständig.',
-        options: [
-          'A) P(Ass) = 4/32 = 1/8 = 0,125 = 12,5 %',
-          'B) P(Ass) = 4/32 = 2/16 = 0,25 = 25 %',
-          'C) P(Ass) = 4/32 = 1/8 = 0,125 = 16,7 %',
-          'D) P(Ass) = 1/32 ≈ 3,1 %'
-        ],
-        correct: 0,
-        correctFeedback: '✅ Vollständig korrekt! 4/32 = 1/8 = 0,125 = 12,5 %. Alle Darstellungsformen stimmen.',
-        wrongFeedback: '❌ Nicht ganz. 4/32 gekürzt: GGT(4,32)=4 → 1/8 = 0,125 = 12,5 %. Überprüfe die Prozentumrechnung.'
-      }
-    },
-
-    // S3: Skat P(Herz) + Vergleich
-    { type: 'question', chamber: 'AB 2 · Skat', title: 'Skat: Herzkarten und Vergleich',
-      story: `Ereignis B: „Die gezogene Karte ist eine Herzkarte."
-Berechne P(B) und vergleiche P(A) und P(B).
-Wie verhält sich P(B) zu P(A)?`,
-      infoBox: `📐 |B| = 8 (alle Herzkarten: 7♥ 8♥ 9♥ 10♥ B♥ D♥ K♥ A♥)
-P(B) = 8/32 = 1/4 = 0,25 = 25 %
-Verhältnis: P(B) / P(A) = (1/4) / (1/8) = 2 → P(B) ist doppelt so groß`,
-      question: {
-        text: 'Welche Beziehung gilt zwischen P(Ass) und P(Herzkarte)?',
-        hint: 'Tipp: Berechne den Quotienten P(Herz) ÷ P(Ass).',
-        options: [
-          'A) P(Herz) = 2 · P(Ass), da 8 = 2 × 4 günstige Ergebnisse.',
-          'B) P(Herz) = P(Ass), da beide im gleichen Spiel.',
-          'C) P(Herz) = 4 · P(Ass).',
-          'D) P(Herz) + P(Ass) = 1 (Gegenwahrscheinlichkeit).'
-        ],
-        correct: 0,
-        correctFeedback: '✅ Korrekt! P(Herz) = 8/32 = 1/4 = 2 × 1/8 = 2 × P(Ass). Der Faktor 2 kommt direkt aus der doppelten Anzahl günstiger Ergebnisse.',
-        wrongFeedback: '❌ P(Herz) = 8/32 = 1/4 = 25 %. P(Ass) = 4/32 = 1/8 = 12,5 %. Der Quotient: 25/12,5 = 2. P(Herz) ist doppelt so groß.'
-      }
-    },
-
-    // S4: Baumdiagramm MIT Zurücklegen + Pfadregel
-    { type: 'question', chamber: 'Info 3+5 · Baumdiagramm', title: 'Urne mit Zurücklegen',
-      story: `Urne: 3 blaue (B), 1 grüne (G), 4 rote (R) Kugeln → 8 gesamt.
+{type:'question',chamber:'Aufgabe 5 · Baumdiagramm',title:'Urne – mit Zurücklegen 🌳',
+ mascotLine:'MIT Zurücklegen: die Wahrscheinlichkeiten bleiben gleich!',
+ story:`Urne: 3 blaue (B), 1 grüne (G), 4 rote (R) – 8 gesamt.
 Zweimaliges Ziehen MIT Zurücklegen.
-Berechne P(B, R): erst blau, dann rot.`,
-      infoBox: `📐 MIT Zurücklegen → Unabhängige Ereignisse:
-1. Zug: P(B) = 3/8 · P(G) = 1/8 · P(R) = 4/8
-2. Zug: Identische Wahrscheinlichkeiten (Urne unverändert)
-Pfadregel: P(B∩R) = P(B) · P(R) = 3/8 · 4/8 = 12/64 = 3/16`,
-      visual: `<svg class="tree-svg" viewBox="0 0 500 260" xmlns="http://www.w3.org/2000/svg">
-        <style>.tl{font-size:12px;font-family:Arial;font-weight:bold}.tp{font-size:10.5px;font-family:Arial;fill:#444}</style>
-        <text x="10" y="18" class="tl" fill="#555">MIT Zurücklegen (MZ)</text>
-        <!-- Root -->
-        <circle cx="50" cy="130" r="14" fill="#666"/>
-        <text x="50" y="135" text-anchor="middle" class="tl" fill="white">U</text>
-        <!-- Äste Ebene 1 -->
-        <line x1="64" y1="130" x2="146" y2="50" stroke="#555" stroke-width="1.5"/>
-        <line x1="64" y1="130" x2="146" y2="130" stroke="#555" stroke-width="1.5"/>
-        <line x1="64" y1="130" x2="146" y2="210" stroke="#555" stroke-width="1.5"/>
-        <text x="93" y="78" class="tp" fill="#2980b9">3/8</text>
-        <text x="93" y="124" class="tp" fill="#27ae60">1/8</text>
-        <text x="93" y="172" class="tp" fill="#c0392b">4/8</text>
-        <!-- Knoten E1 -->
-        <circle cx="158" cy="50" r="13" fill="#3498db"/><text x="158" y="55" text-anchor="middle" class="tl" fill="white">B</text>
-        <circle cx="158" cy="130" r="13" fill="#27ae60"/><text x="158" y="135" text-anchor="middle" class="tl" fill="white">G</text>
-        <circle cx="158" cy="210" r="13" fill="#e74c3c"/><text x="158" y="215" text-anchor="middle" class="tl" fill="white">R</text>
-        <!-- Äste von B -->
-        <line x1="171" y1="50" x2="253" y2="26" stroke="#3498db" stroke-width="1.5"/>
-        <line x1="171" y1="50" x2="253" y2="50" stroke="#3498db" stroke-width="1.5"/>
-        <line x1="171" y1="50" x2="253" y2="74" stroke="#3498db" stroke-width="1.5"/>
-        <text x="200" y="28" class="tp">3/8</text><text x="200" y="46" class="tp">1/8</text><text x="200" y="67" class="tp">4/8</text>
-        <!-- Endknoten von B -->
-        <circle cx="265" cy="26" r="11" fill="#3498db"/><text x="265" y="30" text-anchor="middle" style="font-size:10px;font-family:Arial;fill:white">B</text>
-        <circle cx="265" cy="50" r="11" fill="#27ae60"/><text x="265" y="54" text-anchor="middle" style="font-size:10px;font-family:Arial;fill:white">G</text>
-        <circle cx="265" cy="74" r="11" fill="#e74c3c"/><text x="265" y="78" text-anchor="middle" style="font-size:10px;font-family:Arial;fill:white">R</text>
-        <!-- Ergebnisse von B -->
-        <text x="283" y="29" class="tp">BB: 9/64</text>
-        <text x="283" y="53" class="tp">BG: 3/64</text>
-        <text x="283" y="77" class="tp" fill="#c0392b" style="font-weight:bold">BR: 3/8·4/8=12/64 ✓</text>
-        <!-- Äste von G (vereinfacht) -->
-        <line x1="171" y1="130" x2="253" y2="106" stroke="#27ae60" stroke-width="1"/>
-        <line x1="171" y1="130" x2="253" y2="130" stroke="#27ae60" stroke-width="1"/>
-        <line x1="171" y1="130" x2="253" y2="154" stroke="#27ae60" stroke-width="1"/>
-        <text x="283" y="109" class="tp">GB: 3/64</text>
-        <text x="283" y="133" class="tp">GG: 1/64</text>
-        <text x="283" y="157" class="tp">GR: 4/64</text>
-        <!-- Äste von R (vereinfacht) -->
-        <line x1="171" y1="210" x2="253" y2="186" stroke="#e74c3c" stroke-width="1"/>
-        <line x1="171" y1="210" x2="253" y2="210" stroke="#e74c3c" stroke-width="1"/>
-        <line x1="171" y1="210" x2="253" y2="234" stroke="#e74c3c" stroke-width="1"/>
-        <text x="283" y="189" class="tp">RB: 12/64</text>
-        <text x="283" y="213" class="tp">RG: 4/64</text>
-        <text x="283" y="237" class="tp">RR: 16/64</text>
-        <text x="10" y="255" class="tp" fill="#555">Summe aller Pfade = 64/64 = 1 ✓</text>
-      </svg>`,
-      question: {
-        text: 'Berechne P(B, R) mit Zurücklegen. Welche Aussage ist vollständig korrekt?',
-        hint: 'Tipp: Pfadregel: P(B)·P(R) = 3/8 · 4/8. Kürze das Ergebnis.',
-        options: [
-          'A) P(B,R) = 3/8 · 4/8 = 12/64 = 3/16 ≈ 18,75 %',
-          'B) P(B,R) = 3/8 + 4/8 = 7/8 = 87,5 % (Summenregel)',
-          'C) P(B,R) = 3/7 · 4/7 = 12/49 ≈ 24,5 % (OHNE Zurücklegen)',
-          'D) P(B,R) = 4/8 · 3/7 = 12/56 ≈ 21,4 %'
-        ],
-        correct: 0,
-        correctFeedback: '✅ Perfekt! Mit Zurücklegen: P(B)=3/8, P(R)=4/8 (unverändert). Pfadregel: 3/8 · 4/8 = 12/64 = 3/16 ≈ 18,75 %.',
-        wrongFeedback: '❌ Mit Zurücklegen bleiben alle Wahrscheinlichkeiten konstant! Pfadregel: P(B)·P(R) = 3/8 · 4/8 = 12/64 = 3/16.'
-      }
-    },
+Berechne P(blau, dann rot).`,
+ infoBox:`📐 MIT Zurücklegen → Unabhängige Ereignisse:
+P(B)=3/8, P(G)=1/8, P(R)=4/8 (unverändert nach jedem Zug)
+Pfadregel: Wahrscheinlichkeiten auf einem Pfad multiplizieren.`,
+ visual:`<svg class="tree-svg" viewBox="0 0 470 220" xmlns="http://www.w3.org/2000/svg">
+  <style>.tl{font-size:12px;font-family:Arial;font-weight:bold}.tp{font-size:10px;font-family:Arial;fill:#333}</style>
+  <text x="8" y="16" class="tl" fill="#1d3557">MIT Zurücklegen</text>
+  <circle cx="46" cy="110" r="13" fill="#555"/><text x="46" y="115" text-anchor="middle" class="tl" fill="white">U</text>
+  <line x1="59" y1="110" x2="148" y2="44" stroke="#555" stroke-width="1.5"/>
+  <line x1="59" y1="110" x2="148" y2="110" stroke="#555" stroke-width="1.5"/>
+  <line x1="59" y1="110" x2="148" y2="176" stroke="#555" stroke-width="1.5"/>
+  <text x="88" y="70" class="tp" fill="#2980b9">3/8</text>
+  <text x="88" y="106" class="tp" fill="#27ae60">1/8</text>
+  <text x="88" y="148" class="tp" fill="#c0392b">4/8</text>
+  <circle cx="160" cy="44" r="12" fill="#3498db"/><text x="160" y="48" text-anchor="middle" class="tl" fill="white">B</text>
+  <circle cx="160" cy="110" r="12" fill="#27ae60"/><text x="160" y="114" text-anchor="middle" class="tl" fill="white">G</text>
+  <circle cx="160" cy="176" r="12" fill="#e74c3c"/><text x="160" y="180" text-anchor="middle" class="tl" fill="white">R</text>
+  <line x1="172" y1="44" x2="254" y2="22" stroke="#3498db" stroke-width="1.5"/>
+  <line x1="172" y1="44" x2="254" y2="44" stroke="#3498db" stroke-width="1.5"/>
+  <line x1="172" y1="44" x2="254" y2="66" stroke="#3498db" stroke-width="1.5"/>
+  <text x="206" y="24" class="tp">3/8</text><text x="206" y="40" class="tp">1/8</text><text x="206" y="62" class="tp">4/8</text>
+  <circle cx="264" cy="22" r="10" fill="#3498db"/><text x="264" y="26" text-anchor="middle" style="font-size:10px;font-family:Arial;fill:white">B</text>
+  <circle cx="264" cy="44" r="10" fill="#27ae60"/><text x="264" y="48" text-anchor="middle" style="font-size:10px;font-family:Arial;fill:white">G</text>
+  <circle cx="264" cy="66" r="10" fill="#e74c3c"/><text x="264" y="70" text-anchor="middle" style="font-size:10px;font-family:Arial;fill:white">R</text>
+  <text x="280" y="24" class="tp">BB: 9/64</text>
+  <text x="280" y="47" class="tp">BG: 3/64</text>
+  <text x="280" y="69" class="tp" fill="#c0392b" style="font-weight:bold">BR: 3/8·4/8=12/64 ✓</text>
+  <text x="172" y="110" class="tp" fill="#666">→ RG und RB analog</text>
+  <text x="8" y="215" class="tp" fill="#444">Alle Pfade summieren sich zu 64/64 = 1 ✓</text>
+ </svg>`,
+ question:{text:'Wie groß ist P(blau, dann rot) beim Ziehen MIT Zurücklegen?',
+  hint:'Tipp: Pfadregel – multipliziere P(blau)·P(rot) = 3/8 · 4/8.',
+  options:['A) 3/8 × 4/8 = 12/64 = 3/16 ≈ 18,75 %','B) 3/8 + 4/8 = 7/8 ≈ 87,5 %','C) 3/7 × 4/7 = 12/49 ≈ 24,5 %','D) 4/8 × 3/7 = 12/56 ≈ 21,4 %'],
+  correct:0,
+  correctFeedback:'✅ Richtig! MIT Zurücklegen: 3/8 × 4/8 = 12/64 ≈ 18,75 %. Pfadregel korrekt! 🌳',
+  wrongFeedback:'❌ MIT Zurücklegen: Wahrscheinlichkeiten bleiben gleich. Pfadregel: 3/8 × 4/8 = 12/64.'}},
 
-    // S5: OHNE Zurücklegen
-    { type: 'question', chamber: 'Info 4+6 · Baumdiagramm', title: 'Urne ohne Zurücklegen',
-      story: `Gleiche Urne: 3B, 1G, 4R (=8). Jetzt: Zweimaliges Ziehen OHNE Zurücklegen.
-Berechne P(R, B): erst rot, dann blau.`,
-      infoBox: `📐 OHNE Zurücklegen → Abhängige Ereignisse:
-1. Zug: P(R) = 4/8 = 1/2
-Nach rot: Urne hat noch 7 Kugeln (3B, 1G, 3R)
-2. Zug: P(B|R) = 3/7
-Pfadregel: P(R∩B) = 4/8 · 3/7 = 12/56 = 3/14 ≈ 21,43 %`,
-      visual: `<svg class="tree-svg" viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg">
-        <style>.tl{font-size:12px;font-family:Arial;font-weight:bold}.tp{font-size:10.5px;font-family:Arial;fill:#444}</style>
-        <text x="10" y="18" class="tl" fill="#555">OHNE Zurücklegen (OZ)</text>
-        <circle cx="50" cy="110" r="14" fill="#666"/><text x="50" y="115" text-anchor="middle" class="tl" fill="white">U</text>
-        <line x1="64" y1="110" x2="146" y2="50" stroke="#555" stroke-width="1.5"/>
-        <line x1="64" y1="110" x2="146" y2="110" stroke="#555" stroke-width="1.5"/>
-        <line x1="64" y1="110" x2="146" y2="170" stroke="#555" stroke-width="1.5"/>
-        <text x="90" y="72" class="tp" fill="#2980b9">3/8</text>
-        <text x="90" y="106" class="tp" fill="#27ae60">1/8</text>
-        <text x="90" y="142" class="tp" fill="#c0392b">4/8</text>
-        <circle cx="158" cy="50" r="13" fill="#3498db"/><text x="158" y="55" text-anchor="middle" class="tl" fill="white">B</text>
-        <circle cx="158" cy="110" r="13" fill="#27ae60"/><text x="158" y="115" text-anchor="middle" class="tl" fill="white">G</text>
-        <circle cx="158" cy="170" r="13" fill="#e74c3c"/><text x="158" y="175" text-anchor="middle" class="tl" fill="white">R</text>
-        <!-- Äste von R (OHNE Zurücklegen) -->
-        <line x1="171" y1="170" x2="253" y2="146" stroke="#e74c3c" stroke-width="1.5"/>
-        <line x1="171" y1="170" x2="253" y2="170" stroke="#e74c3c" stroke-width="1.5"/>
-        <line x1="171" y1="170" x2="253" y2="194" stroke="#e74c3c" stroke-width="1.5"/>
-        <text x="200" y="148" class="tp" fill="#2980b9">3/7 B</text>
-        <text x="200" y="168" class="tp" fill="#27ae60">1/7 G</text>
-        <text x="200" y="192" class="tp" fill="#c0392b">3/7 R</text>
-        <text x="265" y="148" class="tp" fill="#c0392b" style="font-weight:bold">RB: 4/8·3/7=12/56 ✓</text>
-        <text x="265" y="168" class="tp">RG: 4/8·1/7=4/56</text>
-        <text x="265" y="192" class="tp">RR: 4/8·3/7=12/56</text>
-        <text x="10" y="195" class="tp" fill="#555">Nach Zug R: 7 Kugeln übrig (3B,1G,3R)</text>
-      </svg>`,
-      question: {
-        text: 'Welche Berechnung von P(R, B) ohne Zurücklegen ist korrekt?',
-        hint: 'Tipp: Nach dem ersten Zug (rot) sind noch 7 Kugeln in der Urne, davon 3 blaue.',
-        options: [
-          'A) P(R,B) = 4/8 · 3/7 = 12/56 = 3/14 ≈ 21,43 %',
-          'B) P(R,B) = 4/8 · 3/8 = 12/64 = 3/16 ≈ 18,75 %',
-          'C) P(R,B) = 3/8 · 4/7 = 12/56 = 3/14 ≈ 21,43 %',
-          'D) P(R,B) = 4/7 · 3/6 = 12/42 ≈ 28,57 %'
-        ],
-        correct: 0,
-        correctFeedback: '✅ Makellos! OHNE Zurücklegen: P(R)=4/8, dann Urne mit 7 Kugeln (3B,1G,3R): P(B)=3/7. Ergebnis: 12/56 = 3/14 ≈ 21,43 %.',
-        wrongFeedback: '❌ Achte auf die geänderte Urne! Nach dem Roten sind noch 7 Kugeln übrig, davon 3 blaue → P(B)=3/7, nicht 3/8.'
-      }
-    },
+{type:'question',chamber:'Aufgabe 6 · Baumdiagramm',title:'Urne – ohne Zurücklegen 🌳',
+ mascotLine:'OHNE Zurücklegen: Nenner sinkt nach jedem Zug!',
+ story:`Gleiche Urne: 3B, 1G, 4R (=8). Jetzt OHNE Zurücklegen.
+Berechne P(rot, dann blau).`,
+ infoBox:`📐 OHNE Zurücklegen → Abhängige Ereignisse:
+1. Zug: P(R)=4/8 → Urne hat noch 7 Kugeln: 3B,1G,3R
+2. Zug: P(B|R)=3/7
+Pfadregel: 4/8 × 3/7 = 12/56 = 3/14 ≈ 21,43 %`,
+ question:{text:'Wie groß ist P(rot, dann blau) OHNE Zurücklegen?',
+  hint:'Tipp: Nach dem ersten Zug (rot) sind noch 7 Kugeln übrig, davon 3 blaue.',
+  options:['A) 4/8 × 3/7 = 12/56 = 3/14 ≈ 21,43 %','B) 4/8 × 3/8 = 12/64 ≈ 18,75 %','C) 4/7 × 3/6 ≈ 28,57 %','D) 3/8 × 4/7 = 12/56 ≈ 21,43 % (falsche Reihenfolge)'],
+  correct:0,
+  correctFeedback:'✅ Bravo! OHNE Zurücklegen: P(R)=4/8, dann P(B)=3/7 → 12/56=3/14≈21,43 %. Meisterhaft! 🏆',
+  wrongFeedback:'❌ OHNE Zurücklegen: Nach Rot hat die Urne noch 7 Kugeln (3B,1G,3R). P(B)=3/7, nicht 3/8.'}},
 
-    // S6: Summenregel
-    { type: 'question', chamber: 'Info 7+8 · Summenregel', title: 'Summenregel: Genau eine blaue Kugel',
-      story: `Urne: 3B, 1G, 4R (=8). Zweimaliges Ziehen MIT Zurücklegen.
-Berechne P(genau einmal blau).
-Es gibt mehrere günstige Pfade – nutze die Summenregel!`,
-      infoBox: `📐 Günstige Pfade für „genau eine blaue Kugel":
-Pfad 1: (B,G): 3/8 · 1/8 = 3/64
-Pfad 2: (B,R): 3/8 · 4/8 = 12/64
-Pfad 3: (G,B): 1/8 · 3/8 = 3/64
-Pfad 4: (R,B): 4/8 · 3/8 = 12/64
-Summenregel: P = 3/64 + 12/64 + 3/64 + 12/64 = 30/64 = 15/32 ≈ 46,875 %`,
-      question: {
-        text: 'Welches Ergebnis liefert die korrekte Anwendung der Summenregel?',
-        hint: 'Tipp: Liste alle Pfade auf, bei denen genau eine blaue Kugel vorkommt, und addiere ihre Wahrscheinlichkeiten.',
-        options: [
-          'A) P(genau 1 blau) = 30/64 = 15/32 ≈ 46,875 %',
-          'B) P(genau 1 blau) = 12/64 = 3/16 ≈ 18,75 %',
-          'C) P(genau 1 blau) = 3/8 = 24/64 ≈ 37,5 %',
-          'D) P(genau 1 blau) = 1 – (5/8)² = 1 – 25/64 = 39/64 ≈ 60,9 %'
-        ],
-        correct: 0,
-        correctFeedback: '✅ Ausgezeichnet! 4 günstige Pfade: (B,G)+(B,R)+(G,B)+(R,B) = 3+12+3+12 = 30 → P = 30/64 = 15/32 ≈ 46,875 %. Die Summenregel meisterhaft angewendet!',
-        wrongFeedback: '❌ Zähle alle günstigen Pfade: (B,G), (B,R), (G,B), (R,B). Ihre Wahrscheinlichkeiten: 3/64 + 12/64 + 3/64 + 12/64 = 30/64 ≈ 46,875 %.'
-      }
-    },
+{type:'final',chamber:'Abschluss',title:'🏆 Akademiemitglied!',
+ mascotLine:'Ich ernenne dich zum Akademiemitglied! Glückwunsch! ⚡',
+ story:`„Glückwunsch!", ruft Professorin Zara. „Du hast alle Prüfungen bestanden!
+Du wirst hiermit zum Akademiemitglied ernannt. Dein Verständnis der Stochastik ist beeindruckend!" ⭐`,
+ summary:['Laplace: P(E) = günstige / alle möglichen Ergebnisse','W6 besser für eine 6 als W8: 1/6 > 1/8','P(Ass) im Skat: 4/32=1/8=12,5 %','P(Herz) im Skat: 8/32=1/4=25 % = 2·P(Ass)','Bällebad P(rot)=400/1750≈22,9 % (kein Laplace!)','MIT Zurücklegen: Pfadregel mit gleichbleibendem Nenner','OHNE Zurücklegen: Nenner sinkt nach jedem Zug'],
+ reflection:'Eine Urne hat 5 rote und 3 blaue Kugeln. Du ziehst zweimal OHNE Zurücklegen. Ist P(rot,blau) gleich wie P(blau,rot)? Begründe und berechne beide Wahrscheinlichkeiten!'}
+]},
 
-    // S7: Final
-    { type: 'final', chamber: 'Abschluss', title: '🥇 Goldenes Zertifikat erhalten!',
-      story: `Professor Stoch überreicht dir feierlich das goldene Zertifikat der Stochastik-Akademie:
+// ══════════════════════════════════════════════════
+// VERSION E – Die Stochastik-Akademie
+// ══════════════════════════════════════════════════
+E:{label:'Expertenstandard 🏆',title:'Die Stochastik-Akademie',totalScenes:8,scenes:[
+
+{type:'intro',chamber:'Einleitung',title:'Die Stochastik-Akademie erwartet dich! 🏆',
+ mascotLine:'Willkommen. Hier zählt Präzision. Viel Erfolg!',
+ story:`Du erreichst die höchste Ebene der Akademie. Professor Stoch begrüßt dich:
+„Hier werden Fachbegriffe, Baumdiagramme, Pfad- und Summenregel meisterhaft beherrscht.
+Nur die Besten erhalten das goldene Zertifikat. Bist du bereit?"`,
+ infoBox:`📚 Fachbegriffe:
+Laplace-Experiment · Ergebnisraum Ω · günstige Ergebnisse
+Baumdiagramm · Pfadregel · Summenregel · Komplementwahrscheinlichkeit
+MIT Zurücklegen (unabhängig) · OHNE Zurücklegen (abhängig)`,
+ nextLabel:'Expertenmodus starten 🏆'},
+
+{type:'question',chamber:'AB 1 · Würfelvergleich',title:'Würfelvergleich – Exakte Analyse 🎲',
+ mascotLine:'Bringe 1/6 und 1/8 auf gemeinsamen Nenner 24.',
+ story:`Du willst eine 6 würfeln. Zur Wahl: W6 (|Ω|=6) oder W8 (|Ω|=8).
+Berechne beide Wahrscheinlichkeiten exakt und bestimme die Differenz.`,
+ infoBox:`📐 |Ω(W6)|=6, |E|=1 → P(W6:6)=1/6≈16,67 %
+|Ω(W8)|=8, |E|=1 → P(W8:6)=1/8=12,5 %
+Differenz: 1/6 - 1/8 = 4/24 - 3/24 = 1/24 ≈ 4,17 Pp`,
+ question:{text:'Welche Aussage zur exakten Differenz der Wahrscheinlichkeiten ist korrekt?',
+  hint:'Tipp: Gemeinsamer Nenner von 6 und 8 ist 24.',
+  options:['A) P(W6)-P(W8) = 1/24 ≈ 4,17 Pp; W6 ist günstiger.','B) P(W6)-P(W8) = 1/14; da 6+8=14.','C) Die Differenz ist 0, da in beiden nur eine 6 vorkommt.','D) P(W8) > P(W6) weil 8 > 6.'],
+  correct:0,
+  correctFeedback:'✅ Exzellent! 1/6-1/8 = 4/24-3/24 = 1/24 ≈ 4,17 Pp. Der W6 ist genau 1/24 besser! 🎲',
+  wrongFeedback:'❌ Berechne sorgfältig: 1/6-1/8. KGV(6,8)=24: 4/24-3/24=1/24≈4,17 Pp.'}},
+
+{type:'question',chamber:'AB 2 · Skat',title:'Skat: P(Ass) – vollständige Darstellung ♠',
+ mascotLine:'Alle Darstellungsformen: Bruch, Dezimal, Prozent!',
+ story:`Skat: 32 Karten, 4 Farben, je 8 Karten (7–As).
+Ereignis A: „Die gezogene Karte ist ein Ass."
+Gib P(A) als vollständig gekürzten Bruch, Dezimalzahl und Prozent an.`,
+ infoBox:`📐 |Ω|=32 · |A|=4 (♣A,♠A,♥A,♦A)
+P(A)=4/32=1/8=0,125=12,5 %`,
+ question:{text:'Welche vollständige Darstellung von P(Ass) ist korrekt?',
+  hint:'Tipp: GGT(4,32)=4 → kürze auf 1/8.',
+  options:['A) P(Ass)=4/32=1/8=0,125=12,5 %','B) P(Ass)=4/32=2/16=0,25=25 %','C) P(Ass)=4/32=1/8=0,125=16,7 %','D) P(Ass)=1/32≈3,1 %'],
+  correct:0,
+  correctFeedback:'✅ Vollständig korrekt! 4/32=1/8=0,125=12,5 %. Alle Darstellungsformen stimmen! ♠',
+  wrongFeedback:'❌ GGT(4,32)=4 → 4/32=1/8=0,125=12,5 %. Überprüfe die Prozentumrechnung.'}},
+
+{type:'question',chamber:'AB 2 · Skat',title:'P(Herz) und Verhältnis zu P(Ass) ♥',
+ mascotLine:'Berechne den Quotienten P(Herz)÷P(Ass).',
+ story:`Ereignis B: „Die gezogene Karte ist eine Herzkarte."
+Berechne P(B) und analysiere das Verhältnis P(B)/P(A).`,
+ infoBox:`📐 |B|=8: 7♥ 8♥ 9♥ 10♥ B♥ D♥ K♥ A♥
+P(B)=8/32=1/4=0,25=25 %
+Verhältnis: P(B)/P(A) = (1/4)/(1/8) = 2`,
+ question:{text:'Welche Beziehung gilt zwischen P(Ass) und P(Herzkarte)?',
+  hint:'Tipp: Quotient P(Herz)÷P(Ass) = (1/4)÷(1/8).',
+  options:['A) P(Herz)=2·P(Ass), da 8=2×4 günstige Ergebnisse.','B) P(Herz)=P(Ass), da gleiches Spiel.','C) P(Herz)=4·P(Ass).','D) P(Herz)+P(Ass)=1 (Gegenereignis).'],
+  correct:0,
+  correctFeedback:'✅ Korrekt! P(Herz)=8/32=1/4=2×1/8=2×P(Ass). Der Faktor 2 aus doppelter Anzahl günstiger Ergebnisse! ♥',
+  wrongFeedback:'❌ P(Herz)=25 %, P(Ass)=12,5 %. Quotient: 25/12,5=2. P(Herz) ist doppelt so groß.'}},
+
+{type:'question',chamber:'Info 3+5 · Baumdiagramm',title:'Urne mit Zurücklegen – Pfadregel 🌳',
+ mascotLine:'Pfadregel: multiplizieren! MIT Zurücklegen: Nenner bleibt 8.',
+ story:`Urne: 3B, 1G, 4R (=8). Zweimaliges Ziehen MIT Zurücklegen.
+Berechne P(B,R): erst blau, dann rot. Kürze das Ergebnis.`,
+ infoBox:`📐 MIT Zurücklegen → Unabhängige Ereignisse:
+P(B)=3/8, P(G)=1/8, P(R)=4/8 (konstant)
+Pfadregel: P(B∩R)=P(B)·P(R)=3/8·4/8=12/64=3/16`,
+ visual:`<svg class="tree-svg" viewBox="0 0 500 260" xmlns="http://www.w3.org/2000/svg">
+  <style>.tl{font-size:11.5px;font-family:Arial;font-weight:bold}.tp{font-size:10px;font-family:Arial;fill:#333}</style>
+  <text x="8" y="16" class="tl" fill="#4c1d95">MIT Zurücklegen (MZ) – vollständiges Baumdiagramm</text>
+  <circle cx="46" cy="130" r="13" fill="#555"/><text x="46" y="135" text-anchor="middle" class="tl" fill="white">U</text>
+  <line x1="59" y1="130" x2="150" y2="50" stroke="#555" stroke-width="1.5"/>
+  <line x1="59" y1="130" x2="150" y2="130" stroke="#555" stroke-width="1.5"/>
+  <line x1="59" y1="130" x2="150" y2="210" stroke="#555" stroke-width="1.5"/>
+  <text x="88" y="78" class="tp" fill="#2980b9">3/8</text>
+  <text x="88" y="126" class="tp" fill="#27ae60">1/8</text>
+  <text x="88" y="174" class="tp" fill="#c0392b">4/8</text>
+  <circle cx="162" cy="50" r="12" fill="#3498db"/><text x="162" y="54" text-anchor="middle" class="tl" fill="white">B</text>
+  <circle cx="162" cy="130" r="12" fill="#27ae60"/><text x="162" y="134" text-anchor="middle" class="tl" fill="white">G</text>
+  <circle cx="162" cy="210" r="12" fill="#e74c3c"/><text x="162" y="214" text-anchor="middle" class="tl" fill="white">R</text>
+  <line x1="174" y1="50" x2="258" y2="26" stroke="#3498db" stroke-width="1.5"/>
+  <line x1="174" y1="50" x2="258" y2="50" stroke="#3498db" stroke-width="1.5"/>
+  <line x1="174" y1="50" x2="258" y2="74" stroke="#3498db" stroke-width="1.5"/>
+  <text x="205" y="28" class="tp">3/8</text><text x="205" y="46" class="tp">1/8</text><text x="205" y="70" class="tp">4/8</text>
+  <circle cx="268" cy="26" r="10" fill="#3498db"/><circle cx="268" cy="50" r="10" fill="#27ae60"/><circle cx="268" cy="74" r="10" fill="#e74c3c"/>
+  <text x="268" y="29" text-anchor="middle" style="font-size:9px;font-family:Arial;fill:white">B</text>
+  <text x="268" y="53" text-anchor="middle" style="font-size:9px;font-family:Arial;fill:white">G</text>
+  <text x="268" y="77" text-anchor="middle" style="font-size:9px;font-family:Arial;fill:white">R</text>
+  <text x="284" y="28" class="tp">BB:9/64</text>
+  <text x="284" y="52" class="tp">BG:3/64</text>
+  <text x="284" y="76" class="tp" fill="#7c3aed" style="font-weight:bold">BR:12/64=3/16 ✓</text>
+  <line x1="174" y1="130" x2="258" y2="106" stroke="#27ae60" stroke-width="1"/>
+  <line x1="174" y1="130" x2="258" y2="130" stroke="#27ae60" stroke-width="1"/>
+  <line x1="174" y1="130" x2="258" y2="154" stroke="#27ae60" stroke-width="1"/>
+  <text x="284" y="108" class="tp">GB:3/64</text><text x="284" y="132" class="tp">GG:1/64</text><text x="284" y="156" class="tp">GR:4/64</text>
+  <line x1="174" y1="210" x2="258" y2="186" stroke="#e74c3c" stroke-width="1"/>
+  <line x1="174" y1="210" x2="258" y2="210" stroke="#e74c3c" stroke-width="1"/>
+  <line x1="174" y1="210" x2="258" y2="234" stroke="#e74c3c" stroke-width="1"/>
+  <text x="284" y="188" class="tp">RB:12/64</text><text x="284" y="212" class="tp">RG:4/64</text><text x="284" y="236" class="tp">RR:16/64</text>
+  <text x="8" y="255" class="tp" fill="#555">Summe aller 9 Pfade: 9+3+12+3+1+4+12+4+16 = 64/64 = 1 ✓</text>
+ </svg>`,
+ question:{text:'Berechne P(B,R) mit Zurücklegen. Welche Aussage ist vollständig korrekt?',
+  hint:'Tipp: Pfadregel: P(B)·P(R)=3/8·4/8. Kürze 12/64.',
+  options:['A) P(B,R)=3/8·4/8=12/64=3/16≈18,75 %','B) P(B,R)=3/8+4/8=7/8=87,5 % (Summenregel!)','C) P(B,R)=3/7·4/7=12/49≈24,5 % (OHNE Zurücklegen)','D) P(B,R)=4/8·3/7=12/56≈21,4 %'],
+  correct:0,
+  correctFeedback:'✅ Perfekt! Mit Zurücklegen: 3/8·4/8=12/64=3/16≈18,75 %. Pfadregel korrekt angewendet! 🌳',
+  wrongFeedback:'❌ MIT Zurücklegen: konstante Wahrscheinlichkeiten! Pfadregel: 3/8·4/8=12/64=3/16.'}},
+
+{type:'question',chamber:'Info 4+6 · Baumdiagramm',title:'Urne ohne Zurücklegen – Abhängige Ereignisse 🌳',
+ mascotLine:'OHNE Zurücklegen: Gesamtzahl sinkt nach jedem Zug!',
+ story:`Urne: 3B, 1G, 4R (=8). Zweimaliges Ziehen OHNE Zurücklegen.
+Berechne P(R,B): erst rot, dann blau.`,
+ infoBox:`📐 OHNE Zurücklegen → Abhängige Ereignisse:
+1. Zug: P(R)=4/8=1/2
+Nach rot: Urne hat 7 Kugeln (3B,1G,3R)
+2. Zug: P(B|R)=3/7
+Pfadregel: P(R∩B)=4/8·3/7=12/56=3/14≈21,43 %`,
+ visual:`<svg class="tree-svg" viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg">
+  <style>.tl{font-size:11.5px;font-family:Arial;font-weight:bold}.tp{font-size:10px;font-family:Arial;fill:#333}</style>
+  <text x="8" y="16" class="tl" fill="#4c1d95">OHNE Zurücklegen (OZ)</text>
+  <circle cx="46" cy="110" r="13" fill="#555"/><text x="46" y="115" text-anchor="middle" class="tl" fill="white">U</text>
+  <line x1="59" y1="110" x2="150" y2="50" stroke="#555" stroke-width="1.5"/>
+  <line x1="59" y1="110" x2="150" y2="110" stroke="#555" stroke-width="1.5"/>
+  <line x1="59" y1="110" x2="150" y2="170" stroke="#555" stroke-width="1.5"/>
+  <text x="88" y="72" class="tp" fill="#2980b9">3/8</text>
+  <text x="88" y="106" class="tp" fill="#27ae60">1/8</text>
+  <text x="88" y="144" class="tp" fill="#c0392b">4/8</text>
+  <circle cx="162" cy="50" r="12" fill="#3498db"/><text x="162" y="54" text-anchor="middle" class="tl" fill="white">B</text>
+  <circle cx="162" cy="110" r="12" fill="#27ae60"/><text x="162" y="114" text-anchor="middle" class="tl" fill="white">G</text>
+  <circle cx="162" cy="170" r="12" fill="#e74c3c"/><text x="162" y="174" text-anchor="middle" class="tl" fill="white">R</text>
+  <line x1="174" y1="170" x2="258" y2="148" stroke="#e74c3c" stroke-width="1.5"/>
+  <line x1="174" y1="170" x2="258" y2="170" stroke="#e74c3c" stroke-width="1.5"/>
+  <line x1="174" y1="170" x2="258" y2="192" stroke="#e74c3c" stroke-width="1.5"/>
+  <text x="205" y="150" class="tp" fill="#2980b9">3/7 B</text>
+  <text x="205" y="168" class="tp" fill="#27ae60">1/7 G</text>
+  <text x="205" y="192" class="tp" fill="#c0392b">3/7 R</text>
+  <text x="272" y="148" class="tp" fill="#7c3aed" style="font-weight:bold">RB:4/8·3/7=12/56=3/14 ✓</text>
+  <text x="272" y="170" class="tp">RG:4/8·1/7=4/56</text>
+  <text x="272" y="192" class="tp">RR:4/8·3/7=12/56</text>
+  <rect x="8" y="186" width="240" height="12" rx="3" fill="rgba(109,40,217,.1)"/>
+  <text x="12" y="196" class="tp" fill="#4c1d95">Nach Zug R: 7 Kugeln übrig (3B, 1G, 3R)</text>
+ </svg>`,
+ question:{text:'Welche Berechnung von P(R,B) ohne Zurücklegen ist korrekt?',
+  hint:'Tipp: Nach dem ersten Zug (rot) hat die Urne noch 7 Kugeln, davon 3 blaue.',
+  options:['A) P(R,B)=4/8·3/7=12/56=3/14≈21,43 %','B) P(R,B)=4/8·3/8=12/64=3/16≈18,75 %','C) P(R,B)=3/8·4/7=12/56≈21,43 % (falsche Reihenfolge)','D) P(R,B)=4/7·3/6=12/42≈28,57 %'],
+  correct:0,
+  correctFeedback:'✅ Makellos! OHNE Zurücklegen: 4/8 · 3/7 = 12/56 = 3/14 ≈ 21,43 %. Abhängige Ereignisse korrekt! 🌳',
+  wrongFeedback:'❌ Nach dem Roten: 7 Kugeln übrig (3B,1G,3R) → P(B)=3/7, nicht 3/8. Pfadregel: 4/8·3/7=12/56.'}},
+
+{type:'question',chamber:'Info 7+8 · Summenregel',title:'Summenregel: Genau eine blaue Kugel ➕',
+ mascotLine:'Liste alle günstigen Pfade auf – es gibt vier!',
+ story:`Urne: 3B, 1G, 4R (=8). Zweimaliges Ziehen MIT Zurücklegen.
+Berechne P(genau einmal blau). Identifiziere alle günstigen Pfade!`,
+ infoBox:`📐 Günstige Pfade (genau 1 Blaue):
+(B,G): 3/8·1/8 = 3/64
+(B,R): 3/8·4/8 = 12/64
+(G,B): 1/8·3/8 = 3/64
+(R,B): 4/8·3/8 = 12/64
+Summenregel: P = 3+12+3+12 = 30/64 = 15/32 ≈ 46,875 %`,
+ question:{text:'Welches Ergebnis liefert die korrekte Anwendung der Summenregel?',
+  hint:'Tipp: 4 günstige Pfade – addiere alle vier Pfadwahrscheinlichkeiten.',
+  options:['A) P(genau 1 blau)=30/64=15/32≈46,875 %','B) P(genau 1 blau)=12/64=3/16≈18,75 %','C) P(genau 1 blau)=3/8=24/64≈37,5 %','D) P(genau 1 blau)=1-(5/8)²=39/64≈60,9 %'],
+  correct:0,
+  correctFeedback:'✅ Ausgezeichnet! 4 Pfade: 3+12+3+12=30 → P=30/64=15/32≈46,875 %. Summenregel meisterhaft! ➕🏆',
+  wrongFeedback:'❌ 4 günstige Pfade: (B,G)+(B,R)+(G,B)+(R,B) = 3/64+12/64+3/64+12/64 = 30/64 ≈ 46,875 %.'}},
+
+{type:'final',chamber:'Abschluss',title:'🥇 Goldenes Zertifikat erhalten!',
+ mascotLine:'Das goldene Zertifikat gehört dir – du hast es verdient! ✦',
+ story:`Professor Stoch überreicht dir feierlich das goldene Zertifikat:
 „Du hast Laplace-Experimente, Baumdiagramme, Pfad- und Summenregel vollständig gemeistert.
-Glückwunsch – du bist ein wahres Stochastik-Talent!"`,
-      summary: [
-        'Laplace: P(E) = |E| / |Ω| – nur bei gleichwahrscheinlichen Ergebnissen',
-        'W6 vs. W8: Differenz exakt 1/24 ≈ 4,17 Pp, W6 ist günstiger',
-        'Skat: P(Ass) = 4/32 = 1/8 = 12,5 %; P(Herz) = 8/32 = 1/4 = 25 % = 2·P(Ass)',
-        'MIT Zurücklegen: Unabhängige Ereignisse – Pfadregel mit konstantem Nenner 8',
-        'OHNE Zurücklegen: Abhängige Ereignisse – Nenner sinkt nach jedem Zug',
-        'Summenregel: Alle günstigen Pfade identifizieren und addieren',
-        'P(genau 1 blau) MIT Zurücklegen = 30/64 = 15/32 ≈ 46,875 %'
-      ],
-      reflection: 'Eine Urne hat 5 rote, 3 blaue, 2 grüne Kugeln. Berechne P(genau eine rote Kugel) bei zweimaligem Ziehen MIT Zurücklegen. Stelle dein Baumdiagramm auf und notiere alle günstigen Pfade mit der Summenregel.'
-    }
-  ]
-}
+Glückwunsch – du bist ein wahres Stochastik-Talent!" 🌟✦`,
+ summary:['Laplace: P(E)=|E|/|Ω| – nur bei gleichwahrscheinlichen Ergebnissen','W6 vs. W8: Differenz exakt 1/24≈4,17 Pp, W6 günstiger','Skat: P(Ass)=1/8=12,5 %; P(Herz)=1/4=25 %=2·P(Ass)','MIT Zurücklegen: Unabhängig – Pfadregel mit konstantem Nenner 8','OHNE Zurücklegen: Abhängig – Nenner sinkt nach jedem Zug','Summenregel: Alle günstigen Pfade identifizieren und addieren','P(genau 1 blau) MZ = 30/64=15/32≈46,875 %'],
+ reflection:'Urne: 5 rote, 3 blaue, 2 grüne Kugeln. Berechne P(genau eine rote Kugel) bei zweimaligem Ziehen MIT Zurücklegen. Stelle das Baumdiagramm auf und notiere alle günstigen Pfade mit der Summenregel.'}
+]}
 
 }; // end adventures
 
-// ─────────────────────────────────────────────
-// GAME STATE
-// ─────────────────────────────────────────────
-let gs = { version: null, sceneIndex: 0, score: 0, answered: false };
+// ─────────────────────────────────────────────────────
+// GAME ENGINE
+// ─────────────────────────────────────────────────────
+let gs={version:null,sceneIndex:0,score:0,answered:false};
+let mascotLineIdx=0;
 
-function startGame(version) {
-  gs = { version, sceneIndex: 0, score: 0, answered: false };
-  document.getElementById('landing').style.display = 'none';
-  const g = document.getElementById('game');
-  g.style.display = 'block';
+function startGame(v){
+  gs={version:v,sceneIndex:0,score:0,answered:false};
+  mascotLineIdx=0;
+  document.getElementById('landing').style.display='none';
+  document.getElementById('game').style.display='block';
+  document.body.className='game-'+v;
   render();
 }
 
-function home() {
-  document.getElementById('landing').style.display = 'flex';
-  document.getElementById('game').style.display = 'none';
+function home(){
+  document.getElementById('landing').style.display='flex';
+  document.getElementById('game').style.display='none';
+  document.body.className='';
 }
 
-function render() {
-  const adv = adventures[gs.version];
-  const scene = adv.scenes[gs.sceneIndex];
-  const v = gs.version;
-  gs.answered = false;
-
-  // Progress bar
-  const pct = (gs.sceneIndex / (adv.totalScenes - 1)) * 100;
-  const pf = document.getElementById('progressFill');
-  pf.style.width = pct + '%';
-  pf.className = 'progress-fill ' + v;
-
-  // Score badge
-  const sb = document.getElementById('scoreBadge');
-  sb.textContent = '⭐ ' + gs.score + ' Punkte';
-  sb.className = 'score-badge ' + v;
-
-  const container = document.getElementById('sceneContainer');
-  container.innerHTML = '';
-
-  if (scene.type === 'intro') renderIntro(scene, v, container);
-  else if (scene.type === 'question') renderQuestion(scene, v, container);
-  else if (scene.type === 'final') renderFinal(scene, v, container, adv);
+function getMascotLine(v){
+  const lines=mascots[v].lines;
+  const line=lines[mascotLineIdx%lines.length];
+  mascotLineIdx++;
+  return line;
 }
 
-function renderIntro(scene, v, container) {
-  let html = `<div class="chamber-tag ${v}">${scene.chamber}</div>
+function render(){
+  const adv=adventures[gs.version];
+  const scene=adv.scenes[gs.sceneIndex];
+  const v=gs.version;
+  gs.answered=false;
+
+  // Progress
+  const pct=(gs.sceneIndex/(adv.totalScenes-1))*100;
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('scoreBadge').textContent='⭐ '+gs.score+' Punkte';
+
+  const container=document.getElementById('sceneContainer');
+  container.innerHTML='';
+
+  if(scene.type==='intro') renderIntro(scene,v,container);
+  else if(scene.type==='question') renderQuestion(scene,v,container);
+  else if(scene.type==='final') renderFinal(scene,v,container,adv);
+}
+
+function buildMascot(v,line){
+  return `<div class="mascot-wrap">
+    ${mascots[v].svg}
+    <div class="mascot-bubble">${line||getMascotLine(v)}</div>
+  </div>`;
+}
+
+function renderIntro(scene,v,container){
+  const mascotLine=scene.mascotLine||getMascotLine(v);
+  container.innerHTML=`<div class="scene-wrap">
+    <div class="chamber-tag">${scene.chamber}</div>
     <div class="scene-title">${scene.title}</div>
-    <div class="story-box ${v}">${scene.story.replace(/\n/g,'<br>')}</div>`;
-  if (scene.infoBox) {
-    html += `<div class="info-box ${v}"><strong>📚 Was du lernst:</strong>${scene.infoBox.replace(/\n/g,'<br>')}</div>`;
-  }
-  html += `<button class="next-btn ${v}" style="display:block" onclick="next()">${scene.nextLabel || 'Weiter →'}</button>`;
-  container.innerHTML = html;
+    ${buildMascot(v,mascotLine)}
+    <div class="story-box">${scene.story.replace(/\n/g,'<br>')}</div>
+    ${scene.infoBox?`<div class="info-box">${scene.infoBox.replace(/\n/g,'<br>')}</div>`:''}
+    <button class="next-btn" style="display:block" onclick="next();playSound('next')">${scene.nextLabel||'Weiter →'}</button>
+  </div>`;
 }
 
-function renderQuestion(scene, v, container) {
-  let html = `<div class="chamber-tag ${v}">${scene.chamber}</div>
+function renderQuestion(scene,v,container){
+  const q=scene.question;
+  const mascotLine=scene.mascotLine||getMascotLine(v);
+  container.innerHTML=`<div class="scene-wrap">
+    <div class="chamber-tag">${scene.chamber}</div>
     <div class="scene-title">${scene.title}</div>
-    <div class="story-box ${v}">${scene.story.replace(/\n/g,'<br>')}</div>`;
-
-  if (scene.infoBox) {
-    html += `<div class="info-box ${v}">${scene.infoBox.replace(/\n/g,'<br>')}</div>`;
-  }
-  if (scene.visual) {
-    html += `<div class="visual-box">${scene.visual}</div>`;
-  }
-
-  const q = scene.question;
-  html += `<div class="question-box">
-    <div class="question-text">${q.text}</div>`;
-  if (q.hint) {
-    html += `<button class="hint-btn" onclick="toggleHint(this)">💡 Tipp anzeigen</button>
-      <div class="hint-box">${q.hint}</div>`;
-  }
-  html += `<div class="options">`;
-  q.options.forEach((opt, i) => {
-    html += `<button class="option-btn" onclick="selectOption(${i})">${opt}</button>`;
-  });
-  html += `</div>
-    <div class="feedback-box" id="feedbackBox"></div>
-  </div>
-  <button class="next-btn ${v}" id="nextBtn" onclick="next()">Weiter →</button>`;
-  container.innerHTML = html;
+    ${buildMascot(v,mascotLine)}
+    <div class="story-box">${scene.story.replace(/\n/g,'<br>')}</div>
+    ${scene.infoBox?`<div class="info-box">${scene.infoBox.replace(/\n/g,'<br>')}</div>`:''}
+    ${scene.visual?`<div class="visual-box">${scene.visual}</div>`:''}
+    <div class="question-box">
+      <div class="question-text">${q.text}</div>
+      ${q.hint?`<button class="hint-btn" onclick="toggleHint(this)">💡 Tipp anzeigen</button><div class="hint-box">${q.hint}</div>`:''}
+      <div class="options">${q.options.map((o,i)=>`<button class="option-btn" onclick="selectOption(${i})">${o}</button>`).join('')}</div>
+      <div class="feedback-box" id="feedbackBox"></div>
+    </div>
+    <button class="next-btn" id="nextBtn" onclick="next();playSound('next')">Weiter →</button>
+  </div>`;
 }
 
-function renderFinal(scene, v, container, adv) {
-  const pct = Math.round((gs.score / ((adv.totalScenes - 2) * 10)) * 100);
-  const pctSafe = Math.min(pct, 100);
-  let html = `<div class="chamber-tag ${v}">${scene.chamber}</div>
+function renderFinal(scene,v,container,adv){
+  const maxScore=(adv.totalScenes-2)*10;
+  const pct=Math.min(100,Math.round((gs.score/maxScore)*100));
+  const stars=pct>=80?'⭐⭐⭐':pct>=50?'⭐⭐':'⭐';
+  const mascotLine=scene.mascotLine||getMascotLine(v);
+  container.innerHTML=`<div class="scene-wrap">
+    <div class="chamber-tag">${scene.chamber}</div>
     <div class="scene-title">${scene.title}</div>
-    <div class="story-box ${v}">${scene.story.replace(/\n/g,'<br>')}</div>
+    ${buildMascot(v,mascotLine)}
+    <div class="story-box">${scene.story.replace(/\n/g,'<br>')}</div>
     <div class="summary-card">
       <h3>🧠 Das hast du gelernt:</h3>
-      <ul class="key-items">`;
-  scene.summary.forEach(item => {
-    html += `<li>${item}</li>`;
-  });
-  html += `</ul>
-      <div class="score-final">⭐ ${gs.score} Punkte · ${pctSafe} % richtig</div>
+      <ul class="key-items">${scene.summary.map(s=>`<li>${s}</li>`).join('')}</ul>
+      <div class="score-final-wrap">
+        <span class="score-final">⭐ ${gs.score} Punkte · ${pct}%</span>
+        <div class="score-stars">${stars}</div>
+      </div>
     </div>
     <div class="reflection-box">
       <h3>🤔 Reflexionsfrage:</h3>
       <p>${scene.reflection}</p>
     </div>
-    <button class="restart-btn" onclick="home()">🏠 Zur Startseite</button>`;
-  container.innerHTML = html;
-
-  // Update progress to 100%
-  document.getElementById('progressFill').style.width = '100%';
+    <button class="restart-btn" onclick="home()">🏠 Zur Startseite</button>
+  </div>`;
+  document.getElementById('progressFill').style.width='100%';
+  setTimeout(()=>{ playSound('victory'); launchConfetti(gs.score); },400);
 }
 
-function toggleHint(btn) {
-  const hintBox = btn.nextElementSibling;
-  if (hintBox.style.display === 'block') {
-    hintBox.style.display = 'none';
-    btn.textContent = '💡 Tipp anzeigen';
-  } else {
-    hintBox.style.display = 'block';
-    btn.textContent = '💡 Tipp verbergen';
-  }
+function toggleHint(btn){
+  const box=btn.nextElementSibling;
+  const visible=box.style.display==='block';
+  box.style.display=visible?'none':'block';
+  btn.textContent=visible?'💡 Tipp anzeigen':'💡 Tipp verbergen';
 }
 
-function selectOption(selectedIdx) {
-  if (gs.answered) return;
-  gs.answered = true;
-
-  const scene = adventures[gs.version].scenes[gs.sceneIndex];
-  const q = scene.question;
-  const correct = q.correct;
-  const buttons = document.querySelectorAll('.option-btn');
-
-  buttons.forEach((btn, i) => {
-    btn.disabled = true;
-    if (i === correct) btn.classList.add('correct');
-    else if (i === selectedIdx && i !== correct) btn.classList.add('wrong');
-    else if (i !== correct) btn.classList.add('missed');
+function selectOption(idx){
+  if(gs.answered)return;
+  gs.answered=true;
+  const q=adventures[gs.version].scenes[gs.sceneIndex].question;
+  const correct=q.correct;
+  document.querySelectorAll('.option-btn').forEach((btn,i)=>{
+    btn.disabled=true;
+    if(i===correct)btn.classList.add('correct');
+    else if(i===idx)btn.classList.add('wrong');
+    else btn.classList.add('missed');
   });
-
-  const fb = document.getElementById('feedbackBox');
-  if (selectedIdx === correct) {
-    gs.score += 10;
-    document.getElementById('scoreBadge').textContent = '⭐ ' + gs.score + ' Punkte';
-    fb.className = 'feedback-box correct-fb';
-    fb.textContent = q.correctFeedback;
+  const fb=document.getElementById('feedbackBox');
+  if(idx===correct){
+    gs.score+=10;
+    document.getElementById('scoreBadge').textContent='⭐ '+gs.score+' Punkte';
+    fb.className='feedback-box correct-fb';
+    fb.textContent=q.correctFeedback;
+    playSound('correct');
   } else {
-    fb.className = 'feedback-box wrong-fb';
-    fb.textContent = q.wrongFeedback;
+    fb.className='feedback-box wrong-fb';
+    fb.textContent=q.wrongFeedback;
+    playSound('wrong');
   }
-  fb.style.display = 'block';
-
-  const nb = document.getElementById('nextBtn');
-  if (nb) nb.style.display = 'block';
+  fb.style.display='block';
+  const nb=document.getElementById('nextBtn');
+  if(nb)nb.style.display='block';
 }
 
-function next() {
+function next(){
   gs.sceneIndex++;
   render();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 </script>
 </body>
